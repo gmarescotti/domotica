@@ -1,0 +1,35 @@
+TGT=nulla
+TARGETS= $(TGT)_tb
+
+WAVES=$(TGT).vcd
+
+CC = /usr/lib/ghdl/bin/gcc
+CFLAGS = -fPIC
+
+GHDL=ghdl
+OPTS=
+prova:OPTS:=
+
+todos : prova_tb
+
+all: $(TARGETS) $(WAVES)
+
+i2c_tb : i2c.o i2c_tb.o
+mdio_tb: modules.o mdio.o tester_mdio.o mdio_tb.o
+## myclocks.o 
+main_tb: modules.o uart_menu.o main.o main_tb.o mdio.o tester_mdio.o i2c.o dummy_clocks.o gpio_uart_bridge.o myuart.o
+
+prova_tb: prova_tb.o sniff.vpi
+	$(GHDL) -a prova_tb.vhdl
+	$(GHDL) -e -Wl,-Wl,-E $@
+	./prova_tb --vpi=./sniff.vpi
+
+sniff.o: sniff.c
+	$(CC) -c $(CFLAGS) $<
+
+sniff.vpi: sniff.o
+	$(CC) --shared -o $@ $<
+
+
+clean:
+	@$(RM) *.o *~ $(TARGETS) tmp/* *.vcd
