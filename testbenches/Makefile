@@ -11,7 +11,14 @@ CFLAGS = -fPIC
 GHDL=ghdl
 OPTS=--workdir=tmp --ieee=synopsys -fexplicit
 
+$(TARGETS): tmp
+
+tutto: $(TARGETS)
+
 all: $(WAVES)
+
+tmp:
+	mkdir tmp
 
 ##########################################################
 i2c_tb : i2c.o i2c_tb.o
@@ -44,5 +51,6 @@ $(TARGETS):
 
 clean:
 	@$(RM) *.o ../*~ *~ $(TARGETS) tmp/* *.vcd log.txt
+	@$(RM) -rf tmp
 	@ghdl --clean
 

@@ -147,7 +147,7 @@ begin
          uart1.data_avail
       );
 
-   -- istanzia il display a 7 segmenti
+   -- istanzia il display a 7 segmenti.
    disp1 : display7seg
       port map (
          clk50 => clk_in,           -- in std_logic;          -- 50 Mhz XTAL
