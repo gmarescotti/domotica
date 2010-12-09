@@ -67,6 +67,8 @@ proc ricevi { command_check { verbose true } { onenumber false } } {
 
    if [ expr $command != $command_check ] {
       puts stderr "Command received is different: $command != $command_check"
+   } else {
+      if $verbose { puts stderr "Command OK." }
    }
 
    set flag_special 0
@@ -155,24 +157,24 @@ proc polling {} {
 proc test_clocks {} {
    puts "TESTING CLOCKS...."
 
-   invia false 0x61 0x61	;# START CLOCK SUM
-   ricevi 0x61 false
+   invia true 0x61 0x61	;# START CLOCK SUM
+   ricevi 0x61 true
   
    # PERDO UN PO' DI TEMPO PER IL SIMULATORE BLOCCATO SULLA GETLINE
    # PIUTTOSTO CHE SUL CALCOLO DEI CLOCKS... 
-   invia false 0x78 8 1 2 3 4 5
-   ricevi 0x78 false
+   invia true 0x78 8 1 2 3 4 5
+   ricevi 0x78 true
 
-   invia false 0x61 0x63 ;# CLKCLOCK
-   puts "CLKCLOCK= [ ricevi 0x61 false true ]"
+   invia true 0x61 0x63 ;# CLKCLOCK
+   puts "CLKCLOCK= [ ricevi 0x61 true true ]"
 
-   invia false 0x61 0x62 ;# REFCLOCK
+   invia true 0x61 0x62 ;# REFCLOCK
    # after 2000
-   puts "REFCLOCK= [ ricevi 0x61 false true ]"
+   puts "REFCLOCK= [ ricevi 0x61 true true ]"
 
-   invia false 0x61 0x64 ;# SERIALCLOCK
+   invia true 0x61 0x64 ;# SERIALCLOCK
    # after 2000
-   puts "SERIALCLOCK= [ ricevi 0x61 false true ]"
+   puts "SERIALCLOCK= [ ricevi 0x61 true true ]"
 }
 
 #######################################################

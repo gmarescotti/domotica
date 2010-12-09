@@ -25,8 +25,8 @@ architecture arch_display7seg of display7seg is
    -- component obuf_lvcmos33 port(i : in std_logic; o : out std_logic); end component;
    -- -- global buffer primitive
    -- component bufg port(i : in std_logic; o : out std_logic); end component;
-   
-   signal khertz_en   : std_logic;            -- 
+
+   signal khertz_en   : std_logic;            --
 
 begin
 
@@ -41,7 +41,7 @@ begin
    -- digit_obuf    : obuf_lvcmos33     port map(i => seg(i),   o => seg_out(i));
    -- sw_ibuf    : ibuf_lvcmos33     port map(i => sw_in(i),   o => sw(i));
    -- end generate;
-   
+
    -- generates a 1 kHz signal from a 50Mhz signal
    process (clk50, reset)
       variable khertz_count : integer;
@@ -50,7 +50,7 @@ begin
          khertz_count := 0;
          khertz_en <= '0';
       elsif clk50'event and clk50 = '1' then
-   
+
             khertz_count := khertz_count + 1;
             if khertz_count = 50000 then -- "1111101000" then
                khertz_en <= '1';
@@ -58,10 +58,10 @@ begin
             else
                khertz_en <= '0';
             end if;
-   
+
       end if;
    end process;
-   
+
    -- shows how to multiplex outputs time counter to 7-segment display
    -- display the content of hexint into the 4digit display
    -- alternatively show 1 digit per time, with refresh rate of 1K hertz.
@@ -71,7 +71,7 @@ begin
       variable first : std_logic;
       variable dp    : std_logic := '1';
    begin
-   
+
       if reset = '1' then
          seg <= (others => '1');
          digit <= (others => '1');
@@ -79,22 +79,22 @@ begin
          first := '0';
          curr := (others => '0');
       elsif clk50'event and clk50 = '1' then
-   
+
          if khertz_en = '1' then
             cd := cd + 1;
          end if;
-   
-         case cd is 
+
+         case cd is
             when "00" =>   curr := hexint(3 downto 0);   digit <= "1110";
             when "01" =>   curr := hexint(7 downto 4);   digit <= "1101";
             when "10" =>   curr := hexint(11 downto 8);  digit <= "1011";
             when others => curr := hexint(15 downto 12); digit <= "0111";
          end case;
-              
-         if first = '1' then 
-            case curr is 
+
+         if first = '1' then
+            case curr is
                               --                   6543210
-               when x"0" => seg <= "0000001" & dp; 
+               when x"0" => seg <= "0000001" & dp;
                when x"1" => seg <= "1001111" & dp;  --        6
                when x"2" => seg <= "0010010" & dp;  --       ---
                when x"3" => seg <= "0000110" & dp;  --    1 |   | 5
@@ -105,7 +105,7 @@ begin
                               --                   6543210
                when x"8" => seg <= "0000000" & dp;  --
                when x"9" => seg <= "0000100" & dp;
-               when x"A" => seg <= "0000010" & dp;
+               when x"A" => seg <= "0001000" & dp;
                when x"B" => seg <= "1100000" & dp;
                when x"C" => seg <= "0110001" & dp;
                when x"D" => seg <= "1000010" & dp;
@@ -118,7 +118,7 @@ begin
          end if;
 
          first := '1';
-   
+
       end if;
    end process;
 

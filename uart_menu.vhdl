@@ -36,6 +36,7 @@ entity uart_menu is
       reset		: in std_logic;
       clk_in, clkref_serdes, serial_clock : in std_logic;
       led		: buffer std_logic_vector(7 downto 4);
+      hexint		: out std_logic_vector(15 downto 0);
 
       uart_enable_read  : out std_logic;
       uart_enable_write : out std_logic;
@@ -78,8 +79,8 @@ begin
    led(4) <= mdio_start_conversion_loc;
 
    -----------------------------------------------------------------------------------------
-   -- PROCESS COMMAND RECEIVED FROM UART
-   -- AND ANSWER RESPONSES TO UART
+   -- PROCESS CHAR RECEIVED FROM UART:
+   -- STORE AND FORWARD MANAGEMENT WHEN CR RECEIVED.
    uart_tester : process (uart_data_avail) is -- , reset)
       variable flag_aspetta_codice: boolean := false;
    begin
@@ -95,6 +96,8 @@ begin
 
             data <= uart_data_out;
             uart_enable_read <= '1';
+	    led(6) <= not led(6);
+	    hexint(7 downto 0) <= uart_data_out;
 	 else
             uart_enable_read <= '0';
 -- assert false report "DATA_AVAIL: " & integer'image(conv_integer(data)) severity note;
@@ -125,50 +128,74 @@ begin
    end process;
 
    -----------------------------------------------------------------------------------------
-   txpr: process (flag_tobe_txed_message, uart_busy_write) is
-      variable counter : integer := -2;
-      variable flag_invio_codice :boolean := false;
+   --
+   stattx: process (flag_tobe_txed_message, uart_busy_write) is
+      type tipo_stato is ( idle, running, invio_codice, invio_CR, fine );
+      variable stato_tx : tipo_stato := idle;
+      variable counter : integer := 0;
+
    begin
-      if reset = '1' or uart_busy_write = '1' then
+      if reset = '1' then
          uart_enable_write <= '0';
+	 stato_tx := idle;
+	 counter := 0;
       else
 
-         if counter = -2 then
-            counter := counter_tx;
-	 end if;
-	 
-         if counter > 0 then
-	    counter := counter - 1;
-	    if ( data_tobe_txed(counter) = x"01" or data_tobe_txed(counter) = x"00" or data_tobe_txed(counter) = x"0D" or data_tobe_txed(counter) = x"0A" ) and flag_invio_codice = false then
-	       counter := counter + 1;
-	       uart_data_in <= x"01"; -- invio carattere di mini protocollo
-	       flag_invio_codice := true;
--- assert false report "INVIO CODICE" severity note;
-	    else
-	       if flag_invio_codice = true then
-		  uart_data_in <= not data_tobe_txed(counter);
--- assert false report "INVIO CODICE REAL" severity note;
-	       else
-		  uart_data_in <= data_tobe_txed(counter);
-	       end if;
+	 if uart_busy_write = '0' then
+	    led(5) <= not led(5);
 
-	       flag_invio_codice := false;
+	    if stato_tx =  idle and counter_tx > 0 then
+	       stato_tx := running;
+	       counter := counter_tx - 1;
 	    end if;
 
--- assert false report "ANSWERING DATA " & integer'image(counter) & ": " & integer'image(conv_integer(data_tobe_txed(counter))) severity note;
-            uart_enable_write <= '1';
-	 elsif counter = 0 then
-	    counter := counter - 1;
-	    uart_data_in <= CR_CODE;  -- at the end send CR
-	    uart_enable_write <= '1';
-	 else
-            counter := -2;
-            uart_enable_write <= '0';
-         end if;
-      end if;
+	    case stato_tx is
+
+	       when running =>
+
+	          if data_tobe_txed(counter) = x"01" or data_tobe_txed(counter) = x"00" or data_tobe_txed(counter) = x"0D" or data_tobe_txed(counter) = x"0A" then
+	             uart_data_in <= x"01"; -- invio carattere di mini protocollo
+	             stato_tx := invio_codice;
+	          else
+	             uart_data_in <= data_tobe_txed(counter);
+
+	             if counter > 0 then
+	                counter := counter - 1;
+		     else
+	                stato_tx := invio_CR;
+	             end if;
+	          end if;
+
+	          uart_enable_write <= '1';
+
+	       when invio_codice =>
+
+	          uart_data_in <= not data_tobe_txed(counter);
+	          if counter > 0 then
+	             counter := counter - 1;
+		  else
+	             stato_tx := invio_CR;
+	          end if;
+
+	       when invio_CR =>
+
+	          uart_data_in <= CR_CODE;  -- at the end send CR
+		  stato_tx := fine;
+
+	       when fine =>
+                  uart_enable_write <= '0';
+		  stato_tx := idle;
+
+	       when others =>
+		  assert false report "stato out of value" severity error;
+
+	    end case;
+	 end if; -- busy write
+      end if;    -- reset
    end process;
             
    -----------------------------------------------------------------------------------------
+   -- Processo che gestisce i comandi da UART. Ogni comando è una sequenza di char finiti da CR.
    process (flag_rxed_message) is
       variable counter_loc : integer := 0;
    begin
@@ -198,6 +225,7 @@ begin
 		  when x"61" =>
 		     -- assert false report "start clock!" severity note;
                      start_clock_test <= not start_clock_test;
+                     counter_loc := 0;
 	          when x"62" =>
                      data_tobe_txed(1) <= numof_refclock(15 downto 8);
                      data_tobe_txed(0) <= numof_refclock(7  downto 0);
@@ -234,7 +262,7 @@ begin
 
             when x"06" =>
                -- gpioA_in <= data_read_back;
-               data_tobe_txed(0) <= x"EE";
+               data_tobe_txed(0) <= x"AA";
                counter_loc := 1;
 
             when others =>
@@ -250,6 +278,7 @@ begin
 
          counter_tx <= counter_loc;
          flag_tobe_txed_message <= not flag_tobe_txed_message;
+	 hexint(15 downto 8) <= std_logic_vector(to_unsigned(counter_loc, 8));
 
          -- trasmetto il primo e a catena vengono trasmessi gli altri dal
          -- processo sottostante
@@ -257,7 +286,8 @@ begin
 
    end process;
 
-   process(clk_in, clkref_serdes, serial_clock)
+   -- Processo che calcola i clock usati
+   clk_calculator: process(clk_in, clkref_serdes, serial_clock)
       variable counter : natural := 0;
       variable counter_ref : natural := 0;
       variable counter_serial : natural := 0;

@@ -35,7 +35,9 @@ architecture tet of uart_tb is
    signal data_avail   : std_logic; -- out
 
    constant COUNT_VALUE : std_logic_vector(9 downto 0) :=
-      "0110110010";  --25MHz/57600Hz = 0x1b2 -- Plasma IF uses div2
+      -- "0110110010";  --25MHz/57600Hz = 0x1b2 -- Plasma IF uses div2
+      "1101100100";  --50MHz/57600Hz = 0x364 -- Giulio USE 50MHz
+
 
    signal tx_clock : std_logic := '0';
 

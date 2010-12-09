@@ -125,6 +125,7 @@ package modules is
          reset		 : in std_logic;
          clk_in, clkref_serdes, serial_clock : in std_logic;
          led		 : buffer std_logic_vector(7 downto 4);
+         hexint		 : out std_logic_vector(15 downto 0);
 
          uart_enable_read     : out std_logic;
          uart_enable_write    : out std_logic;
