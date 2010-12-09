@@ -69,6 +69,7 @@ architecture Behavioral of main is
    -- signal uart_data_avail   : std_logic;
    signal uart1 : uart_rec := ('0','0',(OTHERS => '0'),(OTHERS => '0'), '0', '0');
 
+   signal hexint : std_logic_vector(15 downto 0) := x"c1a0";  -- what to display
 begin
 
    mdio_scl 	<= serial_clock;
@@ -77,8 +78,8 @@ begin
    rate_select 	<= '0';
    t_dis       	<= '1';
 
-   digit_out 	<= (OTHERS => '1' );
-   seg_out   	<= (OTHERS => '1' );
+   -- digit_out 	<= (OTHERS => '1' );
+   -- seg_out   	<= (OTHERS => '1' );
 
    -- SERDES: MDIO serial master interface
    serdes_io : mdio
@@ -128,7 +129,7 @@ begin
       port map(
          reset,
          clk_in, clkref_serdes, serial_clock, -- CLOCKS
-         led(7 downto 4),
+         led(7 downto 4), hexint,
          uart1.enable_read, uart1.enable_write, uart1.busy_write, uart1.data_avail, uart1.data_out, uart1.data_in, -- UART
          mdio1.opcode, mdio1.data_read, mdio1.data_write, mdio1.start_conversion -- MDIO
       );
@@ -154,7 +155,7 @@ begin
          reset => reset,            -- in std_logic;
          digit => digit_out,        -- out std_logic_vector(3 downto 0);   -- digit drivers
          seg   => seg_out,          -- out std_logic_vector(7 downto 0));  -- segment drivers
-         hexint=> x"C1A0"           -- in std_logic_vector(15 downto 0) ;  -- what to display
+         hexint=> hexint            -- x"C1A0" -- in std_logic_vector(15 downto 0) ;  -- what to display
       );
 
 end Behavioral;
