@@ -1,20 +1,20 @@
 ----------------------------------------------------------------------------------
--- Company: 
--- Engineer: 
--- 
--- Create Date:    21:57:10 11/12/2010 
--- Design Name: 
--- Module Name:    main - Behavioral 
--- Project Name: 
--- Target Devices: 
--- Tool versions: 
--- Description: 
+-- Company:
+-- Engineer:
 --
--- Dependencies: 
+-- Create Date:    21:57:10 11/12/2010
+-- Design Name:
+-- Module Name:    main - Behavioral
+-- Project Name:
+-- Target Devices:
+-- Tool versions:
+-- Description:
 --
--- Revision: 
+-- Dependencies:
+--
+-- Revision:
 -- Revision 0.01 - File Created
--- Additional Comments: 
+-- Additional Comments:
 --
 ----------------------------------------------------------------------------------
 library IEEE;
@@ -58,8 +58,8 @@ architecture menu1 of uart_menu is
    signal start_clock_test : std_logic := '0';
    signal start_clock_test2 : std_logic := '0';
    signal numof_clkclock : std_logic_vector(15 downto 0) := (OTHERS => '0');
-   signal numof_refclock : std_logic_vector(15 downto 0) := (OTHERS => '0'); 
-   signal numof_serial_clock : std_logic_vector(15 downto 0) := (OTHERS => '0'); 
+   signal numof_refclock : std_logic_vector(15 downto 0) := (OTHERS => '0');
+   signal numof_serial_clock : std_logic_vector(15 downto 0) := (OTHERS => '0');
    signal mdio_start_conversion_loc : std_logic := '0';
 
    signal data : std_logic_vector(7 downto 0);
@@ -147,7 +147,7 @@ begin
          if counter = -2 then
             counter := counter_tx;
 	 end if;
-	 
+
          if counter > 0 then
 	    counter := counter - 1;
 	    if ( data_tobe_txed(counter) = x"01" or data_tobe_txed(counter) = x"00" or data_tobe_txed(counter) = x"0D" or data_tobe_txed(counter) = x"0A" ) and flag_invio_codice = false then
@@ -178,7 +178,7 @@ begin
          end if;
       end if;
    end process;
-            
+
    -----------------------------------------------------------------------------------------
    -- Processo che gestisce i comandi da UART. Ogni comando è una sequenza di char finiti da CR.
    process (flag_rxed_message) is
@@ -203,7 +203,7 @@ begin
                data_tobe_txed(1) <= mdio_data_read(15 downto 8);
                data_tobe_txed(0) <= mdio_data_read(7 downto 0);
                counter_loc := 2;
-               
+
             when x"61" => -- 'a': start/stop calcolo e controllo REFCLK(serdes) e serial_clock
 	       case data_rxed(1) is
 
@@ -299,6 +299,6 @@ begin
          end if;
       end if;
    end process;
-   
+
 end architecture;
 
