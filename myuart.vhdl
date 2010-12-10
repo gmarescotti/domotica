@@ -58,7 +58,7 @@ uart_proc: process(clk, reset, enable_read, enable_write, data_in,
                    busy_write_sig, uart_read)
    constant COUNT_VALUE : std_logic_vector(9 downto 0) :=
 --      "0100011110";  --33MHz/2/57600Hz = 0x11e
-      "1101100100";  --50MHz/57600Hz = 0x364 -- Giulio USE 50MHz
+      "1101100100";  --50MHz/57600Hz = 0x364 -- Giulio uses 50MHz
 --      "0110110010";  --25MHz/57600Hz = 0x1b2 -- Plasma IF uses div2
 --      "0011011001";  --12.5MHz/57600Hz = 0xd9
 --      "0000000100";  --for debug (shorten read_value_reg)
