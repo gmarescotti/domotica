@@ -3,9 +3,9 @@
 -- Engineer: 
 -- 
 -- Create Date:    21:57:10 11/12/2010 
--- Design Name: 
+-- Design Name:    main module
 -- Module Name:    main - Behavioral 
--- Project Name: 
+-- Project Name:   domus electrica
 -- Target Devices: 
 -- Tool versions: 
 -- Description: 
