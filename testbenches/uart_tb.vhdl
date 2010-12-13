@@ -147,7 +147,7 @@ begin
       wait until falling_edge(busy_write);
       enable_write <= '0';
 
-      wait;
+      assert false report "Fine simulazione" severity note;
    end process;
 
 end;

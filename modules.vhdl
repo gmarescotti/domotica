@@ -7,7 +7,7 @@ use ieee.numeric_bit.all;
 package modules is
 
    constant clk_in_period : time := 20 ns; -- 50MHz   
-   constant CR_CODE : std_logic_vector(7 downto 0) := x"0A";
+   constant CR_CODE : std_logic_vector(7 downto 0) := x"0a";
    -- constant CR_CHAR : x"0a";
 
    type ram_rec is record

@@ -36,10 +36,10 @@ entity uart_menu is
       reset		: in std_logic;
       clk_in, clkref_serdes, serial_clock : in std_logic;
       led		: buffer std_logic_vector(7 downto 4);
-      hexint		: out std_logic_vector(15 downto 0);
+      hexint		: out std_logic_vector(15 downto 0) := x"abcd";
 
-      uart_enable_read  : out std_logic;
-      uart_enable_write : out std_logic;
+      uart_enable_read  : out std_logic := '0';
+      uart_enable_write : out std_logic := '0';
       uart_busy_write   : in std_logic;
       uart_data_avail   : in std_logic;
 
@@ -75,55 +75,82 @@ architecture menu1 of uart_menu is
 
 begin
 
+   -- uart_enable_read <= enable_uart and not write_enable;
+   -- uart_enable_write <= enable_uart and write_enable;
+
    mdio_start_conversion <= mdio_start_conversion_loc;
-   led(4) <= mdio_start_conversion_loc;
+   -- led(4) <= mdio_start_conversion_loc;
 
    -----------------------------------------------------------------------------------------
    -- PROCESS CHAR RECEIVED FROM UART:
    -- STORE AND FORWARD MANAGEMENT WHEN CR RECEIVED.
-   uart_tester : process (uart_data_avail) is -- , reset)
+   uart_tester : process (clk_in) is -- , reset)
       variable flag_aspetta_codice: boolean := false;
+      type stato_uart_type is (wait_avail, read_data, do_next, arrivato_cr, arrivato_cr2);
+      variable stato_uart: stato_uart_type := wait_avail;
    begin
-
-      -- wait on uart_data_avail;
 
       if reset ='1' then
          counter_rx <= 0;
-	 -- uart_enable_read <= '0';
+	 uart_enable_read <= '0';
+	 flag_rxed_message <= '0';
+	 stato_uart := wait_avail;
       else
 
-         if uart_data_avail = '1' then
+	 if clk_in = '1' then
+-- assert false report "uart_state: " & stato_uart_type'image(stato_uart) severity note;
+         case stato_uart is
+            when wait_avail =>
+               if uart_data_avail = '1' then
+                  data <= uart_data_out;
+                  hexint(7 downto 0) <= uart_data_out;
 
-            data <= uart_data_out;
-            uart_enable_read <= '1';
-	    led(6) <= not led(6);
-	    hexint(7 downto 0) <= uart_data_out;
-	 else
-            uart_enable_read <= '0';
+	          stato_uart := read_data;
+	       end if;
+	    when read_data =>
+	       stato_uart := do_next;
+
+               uart_enable_read <= '1'; -- butta giu data_avail
+
+               -- hexint(15 downto 8) <= data;
+
 -- assert false report "DATA_AVAIL: " & integer'image(conv_integer(data)) severity note;
 
-            if data = CR_CODE then -- Carriage Return
-               counter_rx <= 0;
-               flag_rxed_message <= not flag_rxed_message;
-	    elsif data = x"01" then -- mini protocol character
-	       flag_aspetta_codice := true;
-            else
-	       if flag_aspetta_codice = true then
-                  data_rxed(counter_rx) <= not data;
-	       else
-                  data_rxed(counter_rx) <= data;
-	       end if;
-	       flag_aspetta_codice := false;
+               if data = CR_CODE then -- Carriage Return
+                  counter_rx <= 0;
+		  stato_uart := arrivato_cr;
+               elsif data = x"01" then -- mini protocol character
+                  flag_aspetta_codice := true;
+               else
+                  if flag_aspetta_codice = true then
+                     data_rxed(counter_rx) <= not data;
+                  else
+                     data_rxed(counter_rx) <= data;
+                  end if;
+                  flag_aspetta_codice := false;
 
-	       if counter_rx < data_rxed'length - 1 then
-                  counter_rx <= counter_rx + 1;
-	       else
-		  assert false report "counter rx out of bound";
-	       end if;
-            end if;
+                  if counter_rx < data_rxed'length - 1 then
+                     counter_rx <= counter_rx + 1;
+                  else
+                  assert false report "counter rx out of bound";
+                  end if;
+               end if;
 
-	 end if;
+	    when do_next =>
+	       stato_uart := wait_avail;
+               uart_enable_read <= '0';
 
+	    when arrivato_cr =>
+	       stato_uart := arrivato_cr2;
+               uart_enable_read <= '0';
+
+	    when arrivato_cr2 =>
+	       stato_uart := wait_avail;
+	       -- flag_rxed_message <= not flag_rxed_message;
+            when others =>
+         end case;
+
+         end if;
       end if;
    end process;
 
@@ -142,7 +169,6 @@ begin
       else
 
 	 if uart_busy_write = '0' then
-	    led(5) <= not led(5);
 
 	    if stato_tx =  idle and counter_tx > 0 then
 	       stato_tx := running;
@@ -151,7 +177,12 @@ begin
 
 	    case stato_tx is
 
+	       when idle =>
+                  -- nothing...
+	          led(7 downto 4) <= "1001";
+
 	       when running =>
+	          led(7 downto 4) <= "0001";
 
 	          if data_tobe_txed(counter) = x"01" or data_tobe_txed(counter) = x"00" or data_tobe_txed(counter) = x"0D" or data_tobe_txed(counter) = x"0A" then
 	             uart_data_in <= x"01"; -- invio carattere di mini protocollo
@@ -169,6 +200,7 @@ begin
 	          uart_enable_write <= '1';
 
 	       when invio_codice =>
+	          led(7 downto 4) <= "0010";
 
 	          uart_data_in <= not data_tobe_txed(counter);
 	          if counter > 0 then
@@ -179,14 +211,17 @@ begin
 
 	       when invio_CR =>
 
+	          led(7 downto 4) <= "0100";
 	          uart_data_in <= CR_CODE;  -- at the end send CR
 		  stato_tx := fine;
 
 	       when fine =>
+	          led(7 downto 4) <= "1000";
                   uart_enable_write <= '0';
 		  stato_tx := idle;
 
 	       when others =>
+	          led(7 downto 4) <= "1111";
 		  assert false report "stato out of value" severity error;
 
 	    end case;
@@ -268,7 +303,7 @@ begin
             when others =>
                data_tobe_txed(0) <= x"EE";
                counter_loc := 1;
-               led(7) <= not led(7);
+               -- led(7) <= not led(7);
          end case;
 
          data_tobe_txed(counter_loc) <= data_rxed(0);
@@ -278,11 +313,12 @@ begin
 
          counter_tx <= counter_loc;
          flag_tobe_txed_message <= not flag_tobe_txed_message;
-	 hexint(15 downto 8) <= std_logic_vector(to_unsigned(counter_loc, 8));
+	 -- hexint(15 downto 8) <= std_logic_vector(to_unsigned(counter_loc, 8));
+	 hexint(15 downto 8) <= data_rxed(0);
 
          -- trasmetto il primo e a catena vengono trasmessi gli altri dal
          -- processo sottostante
-      end if;
+      end if; -- reset
 
    end process;
 

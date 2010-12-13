@@ -11,11 +11,11 @@ CFLAGS = -fPIC
 GHDL=ghdl
 OPTS=--workdir=tmp --ieee=synopsys -fexplicit
 
-$(TARGETS): tmp
-
 tutto: $(TARGETS)
 
 all: $(WAVES)
+
+$(TARGETS): tmp
 
 tmp:
 	mkdir tmp
@@ -46,7 +46,7 @@ $(TARGETS):
 %.vcd: %_tb
 	@echo Adesso creo diagramma $@ da testbench $<
 	@echo digita gtkwave $@, per vedere il diagramma
-	$(GHDL) -r $(OPTS) $< --vcd=$@
+	$(GHDL) -r $(OPTS) $< --vcd=$@ --assert-level=note
 # --stop-time=1ms
 
 clean:

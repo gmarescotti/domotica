@@ -136,6 +136,8 @@ begin
       elsif enable_read = '1' then
          data_save_reg(17) <= '0';                  --data_available
          data_save_reg(8 downto 0) <= data_save_reg(17 downto 9);
+	 -- GGG
+	 -- data_out <= data_save_reg(7 downto 0);
       end if;
    end if;  --rising_edge(clk)
 
@@ -150,6 +152,8 @@ begin
    end if;
    busy_write <= busy_write_sig;
    data_avail <= data_save_reg(8);
+   
+   -- GGG
    data_out <= data_save_reg(7 downto 0);
  
 end process; --uart_proc
