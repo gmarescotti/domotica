@@ -53,7 +53,7 @@ begin
 
    clkref_serdes <= clkref_serdes_loc;
    
-   process(clkref_serdes_loc) -- converte il clock ref del serdes da 37MHz a ~1MHz buono per le seriali
+   process(clkref_serdes_loc, reset) -- converte il clock ref del serdes da 37MHz a ~1MHz buono per le seriali
       variable clk_counter : integer := 0;
       constant CLK_FRACTION : integer := 32;
    begin
@@ -117,11 +117,11 @@ begin
            				 -- PSDONE => PSDONE, -- Dynamic phase adjust done output
            				 -- STATUS => STATUS, -- 8-bit DCM status bits output
            				 -- CLKFB => clk_out,   -- DCM clock feedback
-                  CLKIN => clk_in   -- Clock input (from IBUFG, BUFG or DCM)
+                  CLKIN => clk_in,   -- Clock input (from IBUFG, BUFG or DCM)
            			 -- PSCLK => PSCLK,   -- Dynamic phase adjust clock input
            			 -- PSEN => PSEN,     -- Dynamic phase adjust enable input
            			 -- PSINCDEC => PSINCDEC, -- Dynamic phase adjust increment/decrement
-           			 -- RST => RST        -- DCM asynchronous reset input
+           	  RST => reset        -- DCM asynchronous reset input
                );
 
       -- OBUFDS: Differential Output Buffer

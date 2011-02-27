@@ -7,7 +7,7 @@ use ieee.numeric_bit.all;
 package modules is
 
    constant clk_in_period : time := 20 ns; -- 50MHz   
-   constant CR_CODE : std_logic_vector(7 downto 0) := x"0a";
+   constant CR_CODE : std_logic_vector(7 downto 0) := x"0A";
    -- constant CR_CHAR : x"0a";
 
    type ram_rec is record
@@ -48,7 +48,7 @@ package modules is
       );
       port (
          reset		 : in std_logic;
-         led		 : buffer std_logic_vector(3 downto 0);
+         -- led		 : buffer std_logic_vector(3 downto 0);
 
    	 serial_clock    : in std_logic; -- deve essere < 2.5 MHz!
    	 serial_data     : inout std_logic;
@@ -123,22 +123,23 @@ package modules is
    component uart_menu is
       port(
          reset		 : in std_logic;
-         clk_in, clkref_serdes, serial_clock : in std_logic;
-         led		 : buffer std_logic_vector(7 downto 4);
+         clk_in		 : in std_logic;
+         -- clkref_serdes, serial_clock : in std_logic;
+         led		 : buffer std_logic_vector(7 downto 0);
          hexint		 : out std_logic_vector(15 downto 0);
 
-         uart_enable_read     : out std_logic;
+         uart_enable_read     : buffer std_logic;
          uart_enable_write    : out std_logic;
          uart_busy_write      : in std_logic;
          uart_data_avail      : in std_logic;
 
          uart_data_out        : in std_logic_vector(7 downto 0);
-         uart_data_in         : out std_logic_vector(7 downto 0);
+         uart_data_in         : out std_logic_vector(7 downto 0)
 
-   	 mdio_opcode  	      : out std_logic_vector(1 downto 0);	-- 00: Address 10: Read-Inc 01: Write
-   	 mdio_data_read       : in std_logic_vector(15 downto 0);
-   	 mdio_data_write      : out std_logic_vector(15 downto 0);
-   	 mdio_start_conversion: out std_logic
+   	 -- mdio_opcode  	      : out std_logic_vector(1 downto 0);	-- 00: Address 10: Read-Inc 01: Write
+   	 -- mdio_data_read       : in std_logic_vector(15 downto 0);
+   	 -- mdio_data_write      : out std_logic_vector(15 downto 0);
+   	 -- mdio_start_conversion: out std_logic
       );
    end component;
 

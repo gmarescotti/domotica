@@ -75,22 +75,19 @@ begin
 
    --------------------------------------------------------
 
-   read_process: process
+   write_process: process
       constant start_bit : std_logic := '0';
       constant stop_bit : std_logic := '1';
       variable dato : std_logic_vector(9 downto 0);
 
    begin
-      enable_write <= '0';
       data_in <= (OTHERS => '1');
-
       uart_read <= '1';
-      enable_read <= '0';
+
       reset <= '1';
-
       wait for 80 us;
-
       reset <= '0';
+
       wait for 30 us;
       --------------------------------------------------
 
@@ -102,18 +99,7 @@ begin
          wait on tx_clock;
       end loop;
 
-      -- wait until data_avail = '0';
-
-      -- wait for 15 us;
-      -- enable_read <= '1';
-      -- wait for 15 us;
-      -- enable_read <= '0';
-
-      -- leggo il dato e ...
-      enable_read <= '1';
-      wait until data_avail = '0';
-      enable_read <= '0';
-      wait for 30 us;
+      wait for 80 us;
 
       --------------------------------------------------
 
@@ -125,10 +111,36 @@ begin
          wait on tx_clock;
       end loop;
 
-      -- leggo il dato e ...
+      wait;
+   end process;
+
+   --------------------------------------------------------------------
+   read_process: process
+      constant start_bit : std_logic := '0';
+      constant stop_bit : std_logic := '1';
+      variable dato : std_logic_vector(9 downto 0);
+
+   begin
+      enable_write <= '0';
+      enable_read <= '1';
+
+      wait until reset = '0';
+      wait for 30 us;
+
+      --------------------------------------------------
+
+      wait until data_avail = '1';
       enable_read <= '1';
       wait until data_avail = '0';
-      enable_read <= '0';
+      -- enable_read <= '0';
+      wait for 30 us;
+
+      --------------------------------------------------
+
+      wait until data_avail = '1';
+      enable_read <= '1';
+      wait until data_avail = '0';
+      -- enable_read <= '0';
       wait for 30 us;
 
       ------------------------------------------------
@@ -141,12 +153,17 @@ begin
       wait on tx_clock;
       wait on tx_clock;
       wait until falling_edge(busy_write);
+      wait on tx_clock;
       data_in <= x"bb";
       wait on tx_clock;
       wait on tx_clock;
       wait until falling_edge(busy_write);
+      wait on tx_clock;
       enable_write <= '0';
 
+      wait on tx_clock;
+      wait on tx_clock;
+      wait on tx_clock;
       assert false report "Fine simulazione" severity note;
    end process;
 

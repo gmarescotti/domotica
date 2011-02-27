@@ -4,8 +4,8 @@ NET "clk_in" LOC = "T9";
 
 ##########################################################
 ## SERIALE UART E RESET
-NET "reset" LOC = "L14";
-NET "reset" CLOCK_DEDICATED_ROUTE = FALSE;
+NET "reset_in" LOC = "L14";
+# NET "reset_in" CLOCK_DEDICATED_ROUTE = FALSE;
 NET "uart_read" LOC = "T13";
 NET "uart_write" LOC = "R13";
 
@@ -15,20 +15,20 @@ NET "uart_write" LOC = "R13";
 
 # PIN 4
 ###NET "rate_select" LOC="E6";
-# PIN 5
-NET "t_fault" LOC="D5";
-# PIN 6
-NET "t_dis" LOC="C5";
-# PIN 7
-NET "los" LOC="D6" | PULLUP;
-# PIN 8
-NET "mod_def<2>" LOC="C6" | PULLUP;
-# PIN 9
-NET "mod_def<1>" LOC="E7" | PULLUP;
-# PIN 10
-NET "mod_def<0>" LOC="C7" | PULLUP;
-
-NET "mdio_sda" LOC="E6" | PULLUP;
+## # PIN 5
+## NET "t_fault" LOC="D5";
+## # PIN 6
+## NET "t_dis" LOC="C5";
+## # PIN 7
+## NET "los" LOC="D6" | PULLUP;
+## # PIN 8
+## NET "mod_def<2>" LOC="C6" | PULLUP;
+## # PIN 9
+## NET "mod_def<1>" LOC="E7" | PULLUP;
+## # PIN 10
+## NET "mod_def<0>" LOC="C7" | PULLUP;
+## 
+## NET "mdio_sda" LOC="E6" | PULLUP;
 
 ##########################################################
 ## LED
@@ -43,14 +43,14 @@ NET "led_out<7>" LOC = "P11";
 
 ##########################################################
 ## TASTI
-NET "tasto<0>" LOC = "F12";
-NET "tasto<1>" LOC = "G12";
-NET "tasto<2>" LOC = "H14";
-NET "tasto<3>" LOC = "H13";
-NET "tasto<4>" LOC = "J14";
-NET "tasto<5>" LOC = "J13";
-NET "tasto<6>" LOC = "K14";
-NET "tasto<7>" LOC = "K13";
+## NET "tasto<0>" LOC = "F12";
+## NET "tasto<1>" LOC = "G12";
+## NET "tasto<2>" LOC = "H14";
+## NET "tasto<3>" LOC = "H13";
+## NET "tasto<4>" LOC = "J14";
+## NET "tasto<5>" LOC = "J13";
+## NET "tasto<6>" LOC = "K14";
+## NET "tasto<7>" LOC = "K13";
 
 ##########################################################
 ## CLOCK REF 30.7 MHz per SERDES
@@ -59,8 +59,8 @@ NET "tasto<7>" LOC = "K13";
 # NET <p_side_output_port_name> LOC=<pin_location> | IOSTANDARD=<io_standard_name>;
 # NET <n_side_output_port_name> LOC=<pin_location> | IOSTANDARD=<io_standard_name>;
 # -- | IOSTANDARD = "LVDS";
-NET "clkref_serdes_p" LOC = "A4" | IOSTANDARD = "LVDSEXT_25";
-NET "clkref_serdes_n" LOC = "B4" | IOSTANDARD = "LVDSEXT_25";
+## NET "clkref_serdes_p" LOC = "A4" | IOSTANDARD = "LVDSEXT_25";
+## NET "clkref_serdes_n" LOC = "B4" | IOSTANDARD = "LVDSEXT_25";
 
 ## SOLO PER TEST!!!!
 # NET "clkref_serdes_back_p" CLOCK_DEDICATED_ROUTE = FALSE;

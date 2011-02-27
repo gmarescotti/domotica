@@ -1,4 +1,4 @@
-TGT=main
+TGT=uart
 TARGETS= $(TGT)_tb
 
 # TARGETS = pseudo_uart
@@ -11,7 +11,7 @@ CFLAGS = -fPIC
 GHDL=ghdl
 OPTS=--workdir=tmp --ieee=synopsys -fexplicit
 
-tutto: $(TARGETS)
+# tutto: $(TARGETS)
 
 all: $(WAVES)
 

@@ -44,8 +44,9 @@ architecture logic of uart is
    signal delay_read_reg  : std_logic_vector(9 downto 0);
    signal bits_read_reg   : std_logic_vector(3 downto 0);
    signal data_read_reg   : std_logic_vector(7 downto 0);
-   signal data_save_reg   : std_logic_vector(17 downto 0);
-   signal busy_write_sig  : std_logic;
+   -- signal data_save_reg   : std_logic_vector(17 downto 0);
+   signal data_save_reg   : std_logic_vector(8 downto 0);
+   signal busy_write_sig  : std_logic := '0';
    signal read_value_reg  : std_logic_vector(6 downto 0);
    signal uart_read2      : std_logic;
 
@@ -73,15 +74,23 @@ begin
       data_read_reg   <= ZERO(7 downto 0);
       bits_read_reg   <= "0000";
       delay_read_reg  <= ZERO(9 downto 0);
-      data_save_reg   <= ZERO(17 downto 0);
+      -- data_save_reg   <= ZERO(17 downto 0);
+      data_save_reg   <= ZERO(8 downto 0);
+      busy_write_sig <= '0'; -- GGG
    elsif rising_edge(clk) then
 
       --Write UART
-      if bits_write_reg = "0000" then               --nothing left to write?
+      if bits_write_reg = "0001" then               --nothing left to write?
+	 busy_write_sig <= not busy_write_sig; -- GGG
+      elsif bits_write_reg = "0000" then               --nothing left to write?
          if enable_write = '1' then
+
             delay_write_reg <= ZERO(9 downto 0);    --delay before next bit
-            bits_write_reg <= "1010";               --number of bits to write
+            -- GGG bits_write_reg <= "1010";               --number of bits to write
+            -- GGG data_write_reg <= data_in & '0';        --remember data & start bit
+            bits_write_reg <= "1011";               --number of bits to write: AGGIUNGO UN UNO PER RITARDARE
             data_write_reg <= data_in & '0';        --remember data & start bit
+
          end if;
       else
          if delay_write_reg /= COUNT_VALUE then
@@ -89,7 +98,7 @@ begin
          else
             delay_write_reg <= ZERO(9 downto 0);    --reset delay
             bits_write_reg <= bits_write_reg - 1;   --bits left to write
-            data_write_reg <= '1' & data_write_reg(8 downto 1);
+            data_write_reg <= '1' & data_write_reg(8 downto 1); -- SHIFT A DESTRA E TRASMETTO BIT0 LSB
          end if;
       end if;
 
@@ -121,42 +130,51 @@ begin
       end if;
 
       --Control character buffer
-      if bits_read_reg = "0000" and delay_read_reg = COUNT_VALUE then
-         if data_save_reg(8) = '0' or 
-               (enable_read = '1' and data_save_reg(17) = '0') then
+      if bits_read_reg = "0000" and delay_read_reg = COUNT_VALUE then -- BEGINNING OF STOP BIT
+-- GGG          if data_save_reg(8) = '0' or 
+-- GGG                (enable_read = '1' and data_save_reg(17) = '0') then
             --Empty buffer
-            data_save_reg(8 downto 0) <= '1' & data_read_reg;
-         else
-            --Second character in buffer
-            data_save_reg(17 downto 9) <= '1' & data_read_reg;
-            if enable_read = '1' then
-               data_save_reg(8 downto 0) <= data_save_reg(17 downto 9);
-            end if;
-         end if;
+            data_save_reg(7 downto 0) <= data_read_reg;
+            data_save_reg(8) <= '1';
+            -- data_save_reg(8 downto 0) <= '1' & data_read_reg;
+-- GGG          else
+-- GGG             --Second character in buffer
+-- GGG             data_save_reg(17 downto 9) <= '1' & data_read_reg;
+-- GGG             if enable_read = '1' then
+-- GGG                data_save_reg(8 downto 0) <= data_save_reg(17 downto 9);
+-- GGG             end if;
+-- GGG          end if;
       elsif enable_read = '1' then
-         data_save_reg(17) <= '0';                  --data_available
-         data_save_reg(8 downto 0) <= data_save_reg(17 downto 9);
+         -- data_save_reg(17) <= '0';                  --data_available
+         -- data_save_reg(8 downto 0) <= data_save_reg(17 downto 9);
+	 data_avail <= data_save_reg(8);
+	 if data_save_reg(8) = '1' then
+	    data_save_reg(8) <= '0';
+	 end if;
 	 -- GGG
 	 -- data_out <= data_save_reg(7 downto 0);
       end if;
    end if;  --rising_edge(clk)
 
+   -- GGG uart_write <= data_write_reg(0);
+-- GGG   if bits_write_reg /= "0000" 
+-- GGG-- Comment out the following line for full UART simulation (much slower)
+-- GGG   and log_file = "UNUSED" 
+-- GGG   then
+-- GGG      busy_write_sig <= '1';
+-- GGG   else
+-- GGG      busy_write_sig <= '0';
+-- GGG end if;
+
+end process; --uart_proc
+
    uart_write <= data_write_reg(0);
-   if bits_write_reg /= "0000" 
--- Comment out the following line for full UART simulation (much slower)
-   and log_file = "UNUSED" 
-   then
-      busy_write_sig <= '1';
-   else
-      busy_write_sig <= '0';
-   end if;
    busy_write <= busy_write_sig;
-   data_avail <= data_save_reg(8);
    
    -- GGG
    data_out <= data_save_reg(7 downto 0);
  
-end process; --uart_proc
+-- end process; --uart_proc
 
 -- synthesis_off
    uart_logger:

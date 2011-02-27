@@ -42,7 +42,7 @@ entity mdio is
    );
    port (
         reset		: in std_logic;
-        led		: buffer std_logic_vector(3 downto 0) := (OTHERS => '0');
+        -- led		: buffer std_logic_vector(3 downto 0) := (OTHERS => '0');
 
 	serial_clock    : in std_logic; -- deve essere < 2.5 MHz!
 	serial_data     : inout std_logic;
@@ -68,17 +68,17 @@ architecture rtl of mdio is
 begin
    start_opcode <= "00" & opcode;
    running_conversion <= running_conversion_loc;
-   led(0) <= running_conversion_loc;
+   -- led(0) <= running_conversion_loc;
 
-   with stato select led(3 downto 1) <=
-	"000" when WaitStart,
-	"001" when Preamble,
-	"010" when StartOpcode,
-	"011" when MdioAddress,
-	"100" when DeviceAddress,
-	"110" when DataWrite,
-	"111" when DataRead,
-	"101" when OTHERS;
+--    with stato select led(3 downto 1) <=
+-- 	"000" when WaitStart,
+-- 	"001" when Preamble,
+-- 	"010" when StartOpcode,
+-- 	"011" when MdioAddress,
+-- 	"100" when DeviceAddress,
+-- 	"110" when DataWrite,
+-- 	"111" when DataRead,
+-- 	"101" when OTHERS;
 	
 
    process(serial_clock, reset)

@@ -29,7 +29,6 @@ architecture rtl of i2c is
    signal stato       : tipo_stato := wait_start;
 
    signal bit_counter 		: natural range 0 to 7 := 0;
-   signal stato_num 		: natural;
    signal serial_clock_loc 	: std_logic;
    signal error_code 		: std_logic_vector(2 downto 0);
 
@@ -37,7 +36,7 @@ begin
 
    serial_clock <= serial_clock_loc;
 	
-   process(double_clock_in)
+   process(double_clock_in, reset)
 	   variable stato_mem   : tipo_stato := wait_start;
 
    begin
@@ -171,30 +170,6 @@ begin
 	    end if;
 	 end if;
       end if;
-   end process;
-
-   process(stato)
-   begin
-      case stato is
-         when wait_start =>
-            stato_num <= 0;
-         when start =>
-            stato_num <= 1;
-         when stop =>
-            stato_num <= 2;
-         when address8 =>
-            stato_num <= 3;
-         when wait_ack =>
-            stato_num <= 4;
-         when device7 =>
-            stato_num <= 5;
-         when command =>
-            stato_num <= 6;
-         when data8 =>
-            stato_num <= 7;
-	 when verify_ack =>
-	    stato_num <= 8;
-      end case;
    end process;
 
 end rtl;

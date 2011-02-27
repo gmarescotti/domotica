@@ -11,7 +11,7 @@ entity display7seg is port (
    clk50        : in std_logic;          -- 50 Mhz XTAL
    reset	: in std_logic;
    digit        : out std_logic_vector(3 downto 0);   -- digit drivers
-   seg          : out std_logic_vector(7 downto 0);  -- segment drivers
+   seg          : out std_logic_vector(7 downto 0) := (OTHERS => '1');  -- segment drivers
    hexint       : in std_logic_vector(15 downto 0));  -- what to display
 end display7seg;
 
@@ -78,6 +78,7 @@ begin
          cd := "00";
          first := '0';
          curr := (others => '0');
+	 dp := '1';
       elsif clk50'event and clk50 = '1' then
 
          if khertz_en = '1' then
