@@ -154,20 +154,20 @@ begin
          -- mdio_opcode => mdio1.opcode, mdio_data_read => mdio1.data_read, mdio_data_write => mdio1.data_write, mdio_start_conversion => mdio1.start_conversion -- MDIO
       );
 
---    -- Istanzia la seriale UART a 57600 baud
---    u78 : uart
---       port map (
---          clk_in,
---          reset,
---          uart1.enable_read,
---          uart1.enable_write,
---          uart1.data_in,
---          uart1.data_out,
---          uart_read, uart_write, -- pins from physical serial port
---          uart1.busy_write,
---          uart1.data_avail
---       );
-      uart_write <= '1';
+    -- Istanzia la seriale UART a 57600 baud
+    u78 : uart
+       port map (
+          clk_in,
+          reset,
+          uart1.enable_read,
+          uart1.enable_write,
+          uart1.data_in,
+          uart1.data_out,
+          uart_read, uart_write, -- pins from physical serial port
+          uart1.busy_write,
+          uart1.data_avail
+       );
+      -- uart_write <= '1';
 
    -- istanzia il display a 7 segmenti
     disp1 : display7seg
