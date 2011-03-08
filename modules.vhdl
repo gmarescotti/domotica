@@ -124,7 +124,7 @@ package modules is
       port(
          reset		 : in std_logic;
          clk_in		 : in std_logic;
-         -- clkref_serdes, serial_clock : in std_logic;
+         clkref_serdes, serial_clock : in std_logic;
          led		 : buffer std_logic_vector(7 downto 0);
          hexint		 : out std_logic_vector(15 downto 0);
 

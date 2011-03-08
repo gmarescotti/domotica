@@ -157,7 +157,11 @@ proc polling {} {
 proc test_clocks {} {
    puts "TESTING CLOCKS...."
 
-   invia true 0x61 0x61	;# START CLOCK SUM
+   invia true 0x61 0x61	0x31;# START CLOCK SUM
+   ricevi 0x61 true
+
+   after 10 ;# msec
+   invia true 0x61 0x61	0x30;# STOP CLOCK SUM
    ricevi 0x61 true
   
    # PERDO UN PO' DI TEMPO PER IL SIMULATORE BLOCCATO SULLA GETLINE

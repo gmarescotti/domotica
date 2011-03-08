@@ -34,8 +34,8 @@ entity main is
 	  -- mdio_scl    : out std_logic;
 
 	  -- SERDES CLK_REF
-	  -- clkref_serdes_p: out std_logic;
-	  -- clkref_serdes_n: out std_logic;
+	   clkref_serdes_p: out std_logic;
+	   clkref_serdes_n: out std_logic;
 
 	  -- PLASMA CPU PINS
 	  clk_in      : in std_logic;
@@ -50,8 +50,8 @@ architecture Behavioral of main is
 
    -- signal running_conversion : std_logic;
 
-   -- signal serial_clock 	: std_logic;
-   -- signal clkref_serdes : std_logic;
+    signal serial_clock 	: std_logic;
+    signal clkref_serdes : std_logic;
 
    -- signal data_read                 : std_logic_vector(15 downto 0);
    -- signal data_write                : std_logic_vector(15 downto 0);
@@ -133,14 +133,14 @@ begin
 -- 	    start_conversion 	=> '0'
 -- 	    );
 
---    -- Genero tutti i clock del progetto
---    instanzia_clocks : myclocks
---    port map(
---           reset,
---           clkref_serdes_p, clkref_serdes_n,
---           serial_clock, clkref_serdes,
---           clk_in
---    );
+    -- Genero tutti i clock del progetto
+    instanzia_clocks : myclocks
+    port map(
+           reset,
+           clkref_serdes_p, clkref_serdes_n,
+           serial_clock, clkref_serdes,
+           clk_in
+    );
 
    -- Gestisce un protocollino su seriale
    -- per esportare lo stato attuale del sistema
@@ -148,7 +148,7 @@ begin
    istanzia_menu : uart_menu
       port map(
          reset => reset,
-         clk_in => clk_in, -- clkref_serdes => clkref_serdes, serial_clock => serial_clock, -- CLOCKS
+         clk_in => clk_in, clkref_serdes => clkref_serdes, serial_clock => serial_clock, -- CLOCKS
          led => led(7 downto 0), hexint => hexint,
          uart_enable_read => uart1.enable_read, uart_enable_write => uart1.enable_write, uart_busy_write => uart1.busy_write, uart_data_avail => uart1.data_avail, uart_data_out => uart1.data_out, uart_data_in => uart1.data_in -- UART
          -- mdio_opcode => mdio1.opcode, mdio_data_read => mdio1.data_read, mdio_data_write => mdio1.data_write, mdio_start_conversion => mdio1.start_conversion -- MDIO

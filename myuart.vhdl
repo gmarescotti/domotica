@@ -81,8 +81,12 @@ begin
 
       --Write UART
       if bits_write_reg = "0001" then               --nothing left to write?
-	 busy_write_sig <= not busy_write_sig; -- GGG
-      elsif bits_write_reg = "0000" then               --nothing left to write?
+	 busy_write_sig <= '1'; -- GGG
+      else
+	 busy_write_sig <= '0'; -- GGG
+      end if;
+      
+      if bits_write_reg = "0000" then               --nothing left to write?
          if enable_write = '1' then
 
             delay_write_reg <= ZERO(9 downto 0);    --delay before next bit

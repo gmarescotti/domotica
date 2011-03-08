@@ -53,7 +53,9 @@ begin
 
    clkref_serdes <= clkref_serdes_loc;
    
-   process(clkref_serdes_loc, reset) -- converte il clock ref del serdes da 37MHz a ~1MHz buono per le seriali
+   -- converte il clock ref del serdes da 30.7MHz a ~1MHz buono per le seriali
+   -- 30,7692MHz / 32 = 0.961 MHz
+   process(clkref_serdes_loc, reset) 
       variable clk_counter : integer := 0;
       constant CLK_FRACTION : integer := 32;
    begin
@@ -61,7 +63,7 @@ begin
          clk_counter := 0;
          serial_clock <= '0';
       else 
-	 if clkref_serdes_loc = '0' then
+	 if rising_edge(clkref_serdes_loc) then
 	    clk_counter := clk_counter + 1;
 
 	    if clk_counter >= CLK_FRACTION then
@@ -80,6 +82,7 @@ begin
    -- DCM: Digital Clock Manager Circuit
    -- Spartan-3
    -- Xilinx HDL Language Template, version 11.1
+   -- Genera un clock = clk_in x 8 / 13 => 50MHz x 8 / 13 = 30,7692MHz
 
    gen1 : if is_xilinx = 1 generate
 
