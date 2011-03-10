@@ -18,7 +18,7 @@ architecture behav of i2c_tb is
    signal start_conversion : std_logic := '0';
    signal scl : std_logic;
    signal sda : std_logic;
-   signal error_code : std_logic_vector(2 downto 0);
+   -- signal error_code : std_logic_vector(2 downto 0);
 
 begin
 
@@ -27,13 +27,14 @@ begin
 		   device_address => "0101010"
 		) 
 	port map(
+	           reset => '0',
 		   double_clock_in => clock,
 		   word_address => "01010101",
                    data => "00110011",
 		   serial_clock => scl,
 		   serial_data => sda,
 		   read_write => read_write,
-		   start_conversion => start_conversion,
+		   start_conversion => start_conversion
 		   error_code => error_code
 		);
 

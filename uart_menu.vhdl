@@ -36,7 +36,7 @@ entity uart_menu is
       reset		: in std_logic;
       clk_in		: in std_logic;
       clkref_serdes, serial_clock : in std_logic;
-      led		: buffer std_logic_vector(7 downto 0) := x"00";
+      led		: buffer std_logic_vector(7 downto 5) := "000";
       hexint		: out std_logic_vector(15 downto 0) := x"c2a0";
 
       uart_enable_read  : buffer std_logic := '0';
@@ -66,7 +66,6 @@ architecture menu1 of uart_menu is
    -- signal data : std_logic_vector(7 downto 0);
 
    signal flag_rxed_message : std_logic := '0';
-   -- signal flag_tobe_txed_message : std_logic := '0';
 
    type arr_type is array(0 to 6) of std_logic_vector(7 downto 0);
    signal data_rxed : arr_type := (OTHERS => (OTHERS => '0'));
@@ -237,20 +236,15 @@ begin
  
          counter_tx <= counter_loc + 1;
 	 
-	 ------------------------------------------------------------------------------------
-         -- flag_tobe_txed_message <= not flag_tobe_txed_message;
-	 ------------------------------------------------------------------------------------
-
       end if; -- reset
  
    end process;
 
    -----------------------------------------------------------------------------------------
 
-   -- led(0) <= flag_tobe_txed_message;
-   led(0) <= combi;
-   led(1) <= uart_enable_write;
-   led(2) <= flag_rxed_message;
+--   led(0) <= combi;
+--   led(1) <= uart_enable_write;
+--   led(2) <= flag_rxed_message;
    
    combi_pro: process(clk_in) is
       variable cnt : integer := 0;
@@ -274,14 +268,11 @@ begin
       end if;
    end process;
    
-   -- combi <= flag_tobe_txed_message xor (());
    combi2 <= combi or uart_busy_write;
    
    -----------------------------------------------------------------------------------------
    -- Processo che trasmette la risposta preparata dal processo process_command
    -- inviando il messaggio in data_tobe_txed seguito da CR via seriale.
-   -- stattx: process (flag_tobe_txed_message, uart_busy_write, reset) is
-   -- stattx: process (flag_tobe_txed_message, reset) is
    stattx: process (combi2, reset) is
       variable counter : integer range 0 to 15 := 0;
       variable NNN : integer := 0;
@@ -292,7 +283,6 @@ begin
 	 stato_tx <= first;
 	 counter := 0;
    
-      -- elsif flag_tobe_txed_message'event or rising_edge(uart_busy_write) then
       elsif rising_edge(combi2) then
 
          NNN := NNN + 1;
@@ -365,14 +355,15 @@ begin
    end process;
 
    with stato_tx select
-      led(7 downto 4) <= "0001" when first,
-		      "0010" when running,
-		      "0011" when invio_codice,
-		      "0100" when invio_CR,
-		      "0101" when fine,
-		      "1110" when errore1,
-		      "1101" when errore2,
-		      "1111" when others;
+      led(7 downto 5) <= 
+		      "000" when first,
+		      "001" when running,
+		      "010" when invio_codice,
+		      "011" when invio_CR,
+		      "100" when fine,
+		      "101" when errore1,
+		      "110" when errore2,
+		      "111" when others;
    
     -- Processo che calcola i clock usati
     clk_calculator: process(clk_in, clkref_serdes, serial_clock, reset)

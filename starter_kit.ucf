@@ -4,6 +4,7 @@ NET "clk_in" LOC = "T9";
 
 ##########################################################
 ## SERIALE UART E RESET
+
 NET "reset_in" LOC = "L14";
 # NET "reset_in" CLOCK_DEDICATED_ROUTE = FALSE;
 NET "uart_read" LOC = "T13";
@@ -13,47 +14,54 @@ NET "uart_write" LOC = "R13";
 ## A2 EXPANSION CONNECTOR
 ## SFP CONNECTION
 
-# PIN 4
-###NET "rate_select" LOC="E6";
-## # PIN 5
-## NET "t_fault" LOC="D5";
-## # PIN 6
-## NET "t_dis" LOC="C5";
-## # PIN 7
-## NET "los" LOC="D6" | PULLUP;
-## # PIN 8
-## NET "mod_def<2>" LOC="C6" | PULLUP;
-## # PIN 9
-## NET "mod_def<1>" LOC="E7" | PULLUP;
-## # PIN 10
-## NET "mod_def<0>" LOC="C7" | PULLUP;
-## 
-## NET "mdio_sda" LOC="E6" | PULLUP;
+# PIN 04
+NET "rate_select" LOC="E6";
+# PIN 05
+NET "t_fault" 	  LOC="D5";
+# PIN 06
+NET "t_dis" 	  LOC="C5";
+# PIN 07
+NET "los" 	  LOC="D6" | PULLUP;
+
+# Module Definition 2. Data line for Serial ID.
+# PIN 08
+NET "mod_def<2>"  LOC="C6" | PULLUP;
+
+# Module Definition 1. Clock line for Serial ID.
+# PIN 09
+NET "mod_def<1>"  LOC="E7" | PULLUP;
+
+# Module Definition 0. Grounded within the module.
+# PIN 10
+NET "mod_def<0>"  LOC="C7" | PULLUP;
 
 ##########################################################
 ## LED
-NET "led_out<0>" LOC = "K12";
-NET "led_out<1>" LOC = "P14";
-NET "led_out<2>" LOC = "L12";
-NET "led_out<3>" LOC = "N14";
-NET "led_out<4>" LOC = "P13";
-NET "led_out<5>" LOC = "N12";
-NET "led_out<6>" LOC = "P12";
-NET "led_out<7>" LOC = "P11";
+NET "led<0>" LOC = "K12";
+NET "led<1>" LOC = "P14";
+NET "led<2>" LOC = "L12";
+NET "led<3>" LOC = "N14";
+NET "led<4>" LOC = "P13";
+NET "led<5>" LOC = "N12";
+NET "led<6>" LOC = "P12";
+NET "led<7>" LOC = "P11";
 
 ##########################################################
 ## TASTI
-## NET "tasto<0>" LOC = "F12";
-## NET "tasto<1>" LOC = "G12";
-## NET "tasto<2>" LOC = "H14";
-## NET "tasto<3>" LOC = "H13";
-## NET "tasto<4>" LOC = "J14";
-## NET "tasto<5>" LOC = "J13";
-## NET "tasto<6>" LOC = "K14";
-## NET "tasto<7>" LOC = "K13";
+NET "tasto<0>" LOC = "F12";
+NET "tasto<1>" LOC = "G12";
+NET "tasto<2>" LOC = "H14";
+NET "tasto<3>" LOC = "H13";
+NET "tasto<4>" LOC = "J14";
+NET "tasto<5>" LOC = "J13";
+NET "tasto<6>" LOC = "K14";
+NET "tasto<7>" LOC = "K13";
 
 ##########################################################
-## CLOCK REF 30.7 MHz per SERDES
+## A2 EXPANSION CONNECTOR
+## SERDES CONNECTION
+
+# CLOCK REF 30.7 MHz per SERDES
 
 # Sets the attributes to an output differential pin pair
 # NET <p_side_output_port_name> LOC=<pin_location> | IOSTANDARD=<io_standard_name>;
@@ -68,6 +76,9 @@ NET "led_out<7>" LOC = "P11";
 # #NET "clkref_serdes_back_n" LOC = "D11" | IOSTANDARD = "LVDSEXT_25";
 # NET "clkref_serdes_back_p" LOC = "C8" | IOSTANDARD = "LVDSEXT_25";
 # NET "clkref_serdes_back_n" LOC = "D8" | IOSTANDARD = "LVDSEXT_25";
+
+# CLOCK E DATO SERIALI
+## NET "mdio_sda" LOC="E6" | PULLUP;
 
 ########################################################## 
 # 4 x 7 segment display:

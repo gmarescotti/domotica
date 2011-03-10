@@ -13,21 +13,20 @@ entity main is
    );
    port(
 	  -- SFP HARDWARE
-	  -- los         : in std_logic;
-	  -- rate_select : out std_logic;
-	  -- t_dis       : out std_logic; -- SWITCH ON LASER WHEN 0
-	  -- t_fault     : in std_logic;
-	  -- mod_def     : inout std_logic_vector(2 downto 0);
+	  los         : in std_logic;
+	  rate_select : out std_logic;
+	  t_dis       : out std_logic; -- TELL LASER TO SWITCH-ON (0: ON, 1: OFF)
+	  t_fault     : in std_logic;
+	  -- Module Definition 2. Data line for Serial ID.
+	  -- Module Definition 1. Clock line for Serial ID.
+	  -- Module Definition 0. Grounded within the module.
+	  mod_def     : inout std_logic_vector(2 downto 0);
 
 	  -- UTILITY
-	  led_out     : out std_logic_vector(7 downto 0);
-	  -- tasto       : in std_logic_vector(7 downto 0);
+	  led         : buffer std_logic_vector(7 downto 0);
+	  tasto       : in std_logic_vector(7 downto 0);
 	  digit_out   : out std_logic_vector(3 downto 0);
 	  seg_out     : out std_logic_vector(7 downto 0);
-
-	  -- SFP I2C SERIAL
-	  -- i2c_sda	  : inout std_logic;
-	  -- i2c_scl	  : out std_logic;
 
 	  -- SERDES MDIO SERIAL
 	  -- mdio_sda    : inout std_logic := 'Z';
@@ -39,7 +38,7 @@ entity main is
 
 	  -- PLASMA CPU PINS
 	  clk_in      : in std_logic;
-	  reset_in       : in std_logic;
+	  reset_in    : in std_logic;
 	  uart_read   : in std_logic;
 	  uart_write  : out std_logic
 
@@ -62,8 +61,6 @@ architecture Behavioral of main is
 
    -- signal data_write_back : std_logic_vector(15 downto 0);
 
-   signal led : std_logic_vector(7 downto 0) := (OTHERS => '0');
-
    -- SIGNAL FOR UART
    -- signal uart_enable_read  : std_logic;
    -- signal uart_enable_write : std_logic;
@@ -79,9 +76,12 @@ begin
 
    -- mdio_scl 	<= serial_clock;
 
-   led_out 	<= led;
-   -- rate_select 	<= '0';
-   -- t_dis       	<= '1';
+   rate_select 	<= '0';
+   t_dis       	<= not tasto(0);
+   led(0) 	<= tasto(0);
+   led(1) 	<= los;
+   led(2)       <= mod_def(0);
+   led(4 downto 3) <= "00";
 
 --   digit_out 	<= (OTHERS => '1' );
 --   seg_out   	<= (OTHERS => '1' );
@@ -120,27 +120,27 @@ begin
 --       );
 
    -- SFP: Small form-factor pluggable transceiver 
---    sfp_io : i2c 
---       generic map ( device_address => "1111111" ) 
---       port map(
--- 	    reset		=> reset,
--- 	    double_clock_in 	=> serial_clock,
--- 	    word_address 	=> "01010101",
--- 	    data 		=> "00110011",
--- 	    serial_clock 	=> i2c_scl,
--- 	    serial_data 	=> i2c_sda,
--- 	    read_write 	=> '0', -- 1: READ, 0: WRITE
--- 	    start_conversion 	=> '0'
--- 	    );
+   sfp_io : i2c 
+      generic map ( device_address => "1010000" ) -- A0
+      port map(
+ 	    reset		=> reset,
+ 	    double_clock_in 	=> serial_clock,
+ 	    word_address 	=> "01010101",
+ 	    data 		=> "00110011",
+ 	    serial_clock 	=> mod_def(1),
+ 	    serial_data 	=> mod_def(2),
+ 	    read_write 	=> '0', -- 1: READ, 0: WRITE
+ 	    start_conversion 	=> '0'
+ 	    );
 
     -- Genero tutti i clock del progetto
-    instanzia_clocks : myclocks
-    port map(
+   instanzia_clocks : myclocks
+   port map(
            reset,
            clkref_serdes_p, clkref_serdes_n,
            serial_clock, clkref_serdes,
            clk_in
-    );
+   );
 
    -- Gestisce un protocollino su seriale
    -- per esportare lo stato attuale del sistema
@@ -149,35 +149,35 @@ begin
       port map(
          reset => reset,
          clk_in => clk_in, clkref_serdes => clkref_serdes, serial_clock => serial_clock, -- CLOCKS
-         led => led(7 downto 0), hexint => hexint,
+         led => led(7 downto 5), hexint => hexint,
          uart_enable_read => uart1.enable_read, uart_enable_write => uart1.enable_write, uart_busy_write => uart1.busy_write, uart_data_avail => uart1.data_avail, uart_data_out => uart1.data_out, uart_data_in => uart1.data_in -- UART
          -- mdio_opcode => mdio1.opcode, mdio_data_read => mdio1.data_read, mdio_data_write => mdio1.data_write, mdio_start_conversion => mdio1.start_conversion -- MDIO
       );
 
-    -- Istanzia la seriale UART a 57600 baud
-    u78 : uart
-       port map (
-          clk_in,
-          reset,
-          uart1.enable_read,
-          uart1.enable_write,
-          uart1.data_in,
-          uart1.data_out,
-          uart_read, uart_write, -- pins from physical serial port
-          uart1.busy_write,
-          uart1.data_avail
-       );
+   -- Istanzia la seriale UART a 57600 baud
+   u78 : uart
+      port map (
+         clk_in,
+         reset,
+         uart1.enable_read,
+         uart1.enable_write,
+         uart1.data_in,
+         uart1.data_out,
+         uart_read, uart_write, -- pins from physical serial port
+         uart1.busy_write,
+         uart1.data_avail
+      );
       -- uart_write <= '1';
 
    -- istanzia il display a 7 segmenti
-    disp1 : display7seg
-       port map (
-          clk50 => clk_in,           -- in std_logic;          -- 50 Mhz XTAL
-          reset => reset,            -- in std_logic;
-          digit => digit_out,        -- out std_logic_vector(3 downto 0);   -- digit drivers
-          seg   => seg_out,          -- out std_logic_vector(7 downto 0));  -- segment drivers
-          hexint=> hexint            -- x"C1A0" -- in std_logic_vector(15 downto 0) ;  -- what to display
-       );
+   disp1 : display7seg
+      port map (
+         clk50 => clk_in,           -- in std_logic;          -- 50 Mhz XTAL
+         reset => reset,            -- in std_logic;
+         digit => digit_out,        -- out std_logic_vector(3 downto 0);   -- digit drivers
+         seg   => seg_out,          -- out std_logic_vector(7 downto 0));  -- segment drivers
+         hexint=> hexint            -- x"C1A0" -- in std_logic_vector(15 downto 0) ;  -- what to display
+      );
 
 end Behavioral;
 
