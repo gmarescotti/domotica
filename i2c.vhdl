@@ -2,9 +2,6 @@
 -- kHz clock rate) are defined. The DDTC works in both modes.
 -- read_write: when set to a 1 a read operation is selected, and when set to a 0 a write operation is selected.
 
-
-
-
 library IEEE;
 use IEEE.std_logic_1164.all;
 
@@ -124,7 +121,8 @@ begin
 
 	       when command =>
 		     --
-		  serial_data <= read_write;
+		  serial_data <= read_write; -- SOLO PER SEQUENTIAL READ!
+		  serial_data <= '0';
 
 		  stato_mem := address8;
 		  bit_counter := 7;
@@ -135,13 +133,17 @@ begin
 		  stato := verify_ack;
 
 	       when address8 =>
-		     --
+		  --
 		  serial_data <= word_address(bit_counter);
 
 		  if bit_counter > 0 then
 		     bit_counter := bit_counter - 1;
 		  else
-		     stato_mem := data8;
+                     if read_write = '1' then
+                        stato_mem := restart_read_cycle;
+                     else
+		        stato_mem := data8;
+                     end if;
 		     bit_counter := 7;
 		     stato := wait_ack;
 
