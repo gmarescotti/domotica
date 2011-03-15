@@ -83,11 +83,13 @@ package modules is
          reset		 : in std_logic;
 	 double_clock_in : in std_logic;
 	 word_address    : in std_logic_vector(7 downto 0);
-	 data            : in std_logic_vector(7 downto 0);
+	 data_read       : out std_logic_vector(7 downto 0);
+	 data_write      : in std_logic_vector(7 downto 0);
          read_write      : in std_logic;
 	 serial_clock    : out std_logic := '0';
 	 serial_data     : inout std_logic := 'Z';
-         start_conversion: in std_logic
+         start_conversion: in std_logic;
+         error_code 	 : out std_logic_vector(2 downto 0)
 	);
    end component;
 
