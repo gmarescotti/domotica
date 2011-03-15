@@ -40,7 +40,7 @@ begin
 
    process(double_clock_in, reset)
 
-      type tipo_stato is ( wait_start, start, stop, address8, wait_ack, verify_ack, device7, command, data8 );
+      type tipo_stato is ( wait_start, start, stop, address8, wait_ack, verify_ack, device7, command, data8, read8, wait_only );
       variable stato       : tipo_stato := wait_start;
 
       variable stato_mem   : tipo_stato := wait_start;
@@ -51,7 +51,6 @@ begin
       --
       if reset = '1' then
 	 stato := wait_start;
-	 is_running <= '0';
  	 error_code <= "000";
 	 
       elsif rising_edge(double_clock_in) then
@@ -86,8 +85,21 @@ begin
 		  if serial_data /= '0' then
 		     stato := stop;
 		     assert false report "NOT ACKNOWLEDGE!" severity note;
+		     error_code <= "001";
+		     stato := wait_start;
 		  else
 		     stato := stato_mem;
+		  end if;
+
+	       when read8 =>
+		  data_read(bit_counter) <= serial_data;
+
+		  if bit_counter > 0 then
+		     bit_counter := bit_counter - 1;
+		  else
+		     stato_mem := stop; -- ONLY READ 1 BYTE AND STOP (Random Read end)
+		     stato := wait_only;
+
 		  end if;
 
 	       when others =>
@@ -100,6 +112,9 @@ begin
 
 	    case stato is
 
+	       when wait_only =>
+		  stato := stato_mem;
+
 	       when wait_start =>
 
 		  if start_conversion = '1' then
@@ -107,10 +122,11 @@ begin
 		     serial_data <= '1';
 		  else
 		     serial_data <= 'Z';
+		     is_running <= '0';
 		  end if;
 
 	       when device7 =>
-		     --
+
 		  serial_data <= device_address(bit_counter);
 
 		  if bit_counter > 0 then
@@ -120,11 +136,16 @@ begin
 		  end if;
 
 	       when command =>
-		     --
-		  serial_data <= read_write; -- SOLO PER SEQUENTIAL READ!
-		  serial_data <= '0';
 
-		  stato_mem := address8;
+		  -- serial_data <= read_write; -- SOLO PER SEQUENTIAL READ!
+		  if stato_mem = start then -- STO FACENDO Random Read
+		     serial_data <= '1'; -- READ MODE
+		     stato_mem := read8;
+		  else
+		     serial_data <= '0';
+		     stato_mem := address8;
+		  end if;
+
 		  bit_counter := 7;
 		  stato := wait_ack;
 
@@ -139,8 +160,8 @@ begin
 		  if bit_counter > 0 then
 		     bit_counter := bit_counter - 1;
 		  else
-                     if read_write = '1' then
-                        stato_mem := restart_read_cycle;
+                     if read_write = '1' then -- Random Read (half)
+                        stato_mem := start; -- START A Current Address Read
                      else
 		        stato_mem := data8;
                      end if;
