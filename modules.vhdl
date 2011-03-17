@@ -4,6 +4,11 @@ use ieee.std_logic_arith.ALL;
 USE ieee.std_logic_unsigned.ALL;
 use ieee.numeric_bit.all;
 
+--- DEBUG PURPOSES
+USE ieee.std_logic_unsigned.ALL;
+use IEEE.STD_LOGIC_TEXTIO.ALL;
+use std.textio.all;
+
 package modules is
 
    constant clk_in_period : time := 20 ns; -- 50MHz   
@@ -58,7 +63,8 @@ package modules is
    	 data_write      : in std_logic_vector(15 downto 0);
    	 start_conversion: in std_logic;
 
-   	 running_conversion  : out std_logic
+   	 running_conversion  : out std_logic;
+	 error_code          : out std_logic_vector(2 downto 0)
       );
    end component;
 
@@ -68,10 +74,14 @@ package modules is
 	 serial_clock    : in std_logic; -- deve essere < 2.5 MHz!
 	 serial_data     : inout std_logic;
 
-         data_read_back  : out std_logic_vector(31 downto 0);
+         data_read_back  : out std_logic_vector(15 downto 0);
 	 data_write_back : in std_logic_vector(15 downto 0);
 
-	 dato_ricevuto   : out std_logic
+	 error_code 	 : out std_logic_vector(2 downto 0);
+
+	 opcode  : buffer std_logic_vector(1 downto 0);
+         addr    : out std_logic_vector(4 downto 0);
+         devaddr : out std_logic_vector(4 downto 0)
       );
    end component;
 
@@ -184,6 +194,9 @@ package modules is
 
    constant ZERO : std_logic_vector(63 downto 0) := (OTHERS => '0');
    constant ONES : std_logic_vector(63 downto 0) := (OTHERS => '1');
+
+   procedure mylog(name:string; value:std_logic_vector);
+   procedure mylog2(name:string; value:std_logic_vector);
 end;
 
 package body modules is
@@ -200,6 +213,24 @@ package body modules is
       END LOOP;
       RETURN not(Z);
    END ALL_ZERO; -- end function 
+
+   procedure mylog(name:string; value:std_logic_vector) is
+      variable line_out: Line; -- Line buffers
+   begin
+      write(line_out, name);
+      -- write(line_out, string'("DATA="));
+      hwrite(line_out, value);
+      writeline(OUTPUT, line_out);
+   end procedure mylog;
+
+   procedure mylog2(name:string; value:std_logic_vector) is
+      variable line_out: Line; -- Line buffers
+   begin
+      write(line_out, name);
+      -- write(line_out, string'("DATA="));
+      write(line_out, value);
+      writeline(OUTPUT, line_out);
+   end procedure mylog2;
 
 end modules;
 

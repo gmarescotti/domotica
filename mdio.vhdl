@@ -7,6 +7,7 @@
 -- bidirectional data MDIO. MDC has a maximum clock rate of
 -- 2.5 MHz and no minimum limit. The MDIO is bidirectional and
 -- can be shared by up to 32 physical devices.
+
 -- The MDIO pin requires a pull-up resistor which, during IDLE
 -- and turnaround, will pull MDIO high. The parallel equivalence
 -- of the MDIO when shared with other devices should not be
@@ -16,6 +17,7 @@
 -- able to control the edge rate of MDC and MDIO from the
 -- station management controller to optimize signal quality de-
 -- pending upon the trace net and any resulting stub lengths.
+
 -- In order to initialize the MDIO interface, the station manage-
 -- ment sends a sequence of 32 contiguous logic ones on MDIO
 -- with MDC clocking. This preamble may be generated either
@@ -47,12 +49,17 @@ entity mdio is
 	serial_clock    : in std_logic; -- deve essere < 2.5 MHz!
 	serial_data     : inout std_logic;
 
-	opcode  	: in std_logic_vector(1 downto 0);	-- 00: Address 10: Read-Inc 01: Write
+	-- 00: Address
+        -- 10: Read-Inc
+        -- 01: Write
+	opcode  	: in std_logic_vector(1 downto 0);
+
 	data_read       : out std_logic_vector(15 downto 0);
 	data_write      : in std_logic_vector(15 downto 0);
 	start_conversion : in std_logic;
 
-	running_conversion  : out std_logic
+	running_conversion  : out std_logic;
+	error_code          : out std_logic_vector(2 downto 0)
    );
 end entity mdio;
 
@@ -60,15 +67,12 @@ architecture rtl of mdio is
 
    type tipo_stato is ( WaitStart, Preamble, StartOpcode, MdioAddress, DeviceAddress, TurnAroundDataRead, TurnAroundDataWrite, DataRead, DataWrite );
    signal start_opcode : std_logic_vector(3 downto 0);
-   signal start_conversion_loc : std_logic := '0';
-   signal running_conversion_loc : std_logic := '0';
 
    signal stato       	: tipo_stato := WaitStart;
+   signal start_conversion_loc : std_logic := '0';
 
 begin
    start_opcode <= "00" & opcode;
-   running_conversion <= running_conversion_loc;
-   -- led(0) <= running_conversion_loc;
 
 --    with stato select led(3 downto 1) <=
 -- 	"000" when WaitStart,
@@ -88,30 +92,30 @@ begin
       if reset = '1' then
 	 stato <= WaitStart;
 	 bit_counter := 0;
-	 start_conversion_loc <= '0';
-	 running_conversion_loc <= '0';
-	 data_read <= X"1020";
+	 start_conversion_loc <= start_conversion;
+	 running_conversion <= '0';
+	 error_code <= "000";
 	 serial_data <= 'Z';
       else 
 
-	 if serial_clock'event and serial_clock = '0' then
+	 if falling_edge(serial_clock) then
 
 	    case stato is
 
 	       when WaitStart =>
-		  bit_counter := 31;
 		  serial_data <= 'Z';
 
 		  if start_conversion /= start_conversion_loc then
 		     start_conversion_loc <= start_conversion;
+		     bit_counter := 31;
 		     stato <= Preamble;
-		     running_conversion_loc <= '1';
-		  -- data_read <= "ZZZZZZZZZZZZZZZZ";
-		     data_read <= X"BBBB";
+		     running_conversion <= '1';
+		     error_code <= "000";
+	          else
+		     running_conversion <= '0';
 		  end if;
 
 	       when Preamble =>
-		  data_read <= X"2222";
 		  serial_data <= '1';
 
 		  if bit_counter > 0 then
@@ -122,7 +126,6 @@ begin
 		  end if;
 
 	       when StartOpcode =>
-		  data_read <= X"3333";
 		  serial_data <= start_opcode(bit_counter);
 
 		  if bit_counter > 0 then
@@ -133,7 +136,6 @@ begin
 		  end if;
 
 	       when MdioAddress =>
-		  data_read <= X"4444";
 		  serial_data <= mdio_address(bit_counter);
 
 		  if bit_counter > 0 then
@@ -144,7 +146,6 @@ begin
 		  end if;
 
 	       when DeviceAddress =>
-		  data_read <= X"5555";
 		  serial_data <= device_address(bit_counter);
 
 		  if bit_counter > 0 then
@@ -158,7 +159,6 @@ begin
 		  end if;
 
 	       when TurnAroundDataWrite =>
-		  data_read <= X"6666";
 		  if bit_counter = 0 then
 		     serial_data <= '1';
 		     bit_counter := 15;
@@ -168,18 +168,15 @@ begin
 		  end if;
 
 	       when DataWrite =>
-		  data_read <= X"7777";
 		  serial_data <= data_write(bit_counter);
 
 		  if bit_counter > 0 then
 		     bit_counter := bit_counter - 1;
 		  else
 		     stato <= WaitStart;
-		     running_conversion_loc <= '0';
 		  end if;
 
 	       when TurnAroundDataRead =>
-		  data_read <= X"8888";
 		  serial_data <= 'Z';
 		  if bit_counter = 0 then
 		     bit_counter := 15;	 
@@ -187,10 +184,9 @@ begin
 		     if serial_data = '0' then
 			stato <= DataRead;
 		     else
-			data_read <= X"AAAA";
 			stato <= WaitStart; -- ERRORE!
+			error_code <= "001";
 
-			running_conversion_loc <= '0';
 		     end if;
 		  end if;
 
@@ -201,12 +197,10 @@ begin
 		     bit_counter := bit_counter - 1;
 		  else
 		     stato <= WaitStart;
-		     running_conversion_loc <= '0';
 		  end if;
 	       when others =>
-		  data_read <= X"CCCC";
 		  stato <= WaitStart;
-
+		  error_code <= "111";
 
 	    end case;
 	 end if;

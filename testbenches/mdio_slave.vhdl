@@ -1,181 +1,146 @@
-----------------------------------------------------------------------------------
--- Company: 
--- Engineer: 
--- 
--- Create Date:    18:57:15 11/17/2010 
--- Design Name: 
--- Module Name:    mdio_slave - Behavioral 
--- Project Name: 
--- Target Devices: 
--- Tool versions: 
--- Description: 
---
--- Dependencies: 
---
--- Revision: 
--- Revision 0.01 - File Created
--- Additional Comments: 
---
-----------------------------------------------------------------------------------
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
--- use IEEE.STD_LOGIC_ARITH.ALL;
--- use IEEE.STD_LOGIC_UNSIGNED.ALL;
-
----- Uncomment the following library declaration if instantiating
----- any Xilinx primitives in this code.
---library UNISIM;
---use UNISIM.VComponents.all;
 
 entity mdio_slave is
    port (
-           reset 	   : in std_logic;
+	   reset 	   : in std_logic;
 	   serial_clock    : in std_logic; -- deve essere < 2.5 MHz!
 	   serial_data     : inout std_logic;
 
-	   data_read_back  : out std_logic_vector(31 downto 0) := "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ";
+	   data_read_back  : out std_logic_vector(15 downto 0) := (OTHERS => 'Z');
 	   data_write_back : in std_logic_vector(15 downto 0);
 
-           dato_ricevuto : out std_logic
+	   error_code 	   : out std_logic_vector(2 downto 0);
+
+	   opcode : buffer std_logic_vector(1 downto 0);
+           addr    : out std_logic_vector(4 downto 0);
+           devaddr : out std_logic_vector(4 downto 0)
    );
 end mdio_slave;
 
 architecture Behavioral of mdio_slave is
 
-   type tipo_stato is ( aspetta_preamble, aspetta_zero, aspetta_start,
-aspetta_code, addresses, turn_around_read, turn_around_write, scrivi_dato_back, leggi_dato );
-   signal code : std_logic_vector(1 downto 0);
-   signal dato_ricevuto_loc : std_logic := '0';
+   type tipo_stato is ( aspetta_preamble, aspetta_zero, aspetta_start, aspetta_code, addresses, turn_around_read, turn_around_write, scrivi_dato_back, leggi_dato );
+   signal alladdresses : std_logic_vector(9 downto 0);
 
 begin
-   dato_ricevuto <= dato_ricevuto_loc;
+
+   addr <= alladdresses(4 downto 0);
+   devaddr <= alladdresses(9 downto 5);
 
    process(serial_clock, reset)
 
       variable stato   : tipo_stato := aspetta_preamble;
       variable counter : natural := 31;
-      variable counter_tot: integer range -1 to 31 := -1;
 
    begin
 
       if reset = '1' then
 	 stato := aspetta_preamble;
 	 counter := 31;
-	 counter_tot := -1;
 	 serial_data <= 'Z';
-      else
-	 if rising_edge(serial_clock) then
+	 error_code <= "000";
 
-	    serial_data <= 'Z';
+      elsif rising_edge(serial_clock) then
 
-	    case stato is
-	       when aspetta_preamble =>
+	 serial_data <= 'Z';
 
-		  counter_tot := -1;
+	 case stato is
+	    when aspetta_preamble =>
 
-		  if serial_data = '0' then
-		     counter := 31;
-		     dato_ricevuto_loc <= not dato_ricevuto_loc;
-		  else 
-
-		     if counter > 0 then
-			counter := counter - 1;
-		     else
-			stato := aspetta_zero;
-		     end if;
-		  end if;
-
-	       when aspetta_zero =>
-		  if serial_data = '0' then
-		     stato := aspetta_start;
-		     counter_tot := 31;
-		  end if;
-
-	       when aspetta_start =>
-
-		  if serial_data = '1' then
-		     data_read_back <= X"EEEEEEE2";
-		     dato_ricevuto_loc <= not dato_ricevuto_loc;
-		     stato := aspetta_preamble;
-		  else
-		     stato := aspetta_code;
-		     counter := 1;
-		  end if;
-
-	       when aspetta_code =>
-
-		  code(counter) <= serial_data;
+	       if serial_data = '0' then
+		  counter := 31;
+	       else 
 
 		  if counter > 0 then
 		     counter := counter - 1;
 		  else
-		     stato := addresses;
-		     counter := 9; -- ADDRS (5) + DEVADDR (5)
+		     stato := aspetta_zero;
 		  end if;
+	       end if;
 
-	       when addresses =>
+	    when aspetta_zero =>
+	       if serial_data = '0' then
+		  stato := aspetta_start;
+		  error_code <= "000";
+	       end if;
 
-		  if counter > 0 then
-		     counter := counter - 1;
+	    when aspetta_start =>
+
+	       if serial_data = '1' then
+		  stato := aspetta_preamble;
+		  counter := 31;
+		  error_code <= "001";
+	       else
+		  stato := aspetta_code;
+		  counter := 1;
+	       end if;
+
+	    when aspetta_code =>
+
+	       opcode(counter) <= serial_data;
+
+	       if counter > 0 then
+		  counter := counter - 1;
+	       else
+		  stato := addresses;
+		  counter := 9; -- ADDRS (5) + DEVADDR (5)
+	       end if;
+
+	    when addresses =>
+
+	       alladdresses(counter) <= serial_data;
+
+	       if counter > 0 then
+		  counter := counter - 1;
+	       else
+		  if opcode(1) = '1' then -- READ
+		     stato := turn_around_write;
 		  else
-		     if code(1) = '1' then -- READ
-			stato := turn_around_write;
-		     else
-			stato := turn_around_read;
-		     end if;
-		     counter := 1;
+		     stato := turn_around_read;
 		  end if;
+		  counter := 1;
+	       end if;
 
-	       when turn_around_read =>
+	    when turn_around_read =>
 
-		  if counter > 0 then
-		     counter := counter - 1;
-		  else
-		     stato := leggi_dato;
-		     counter := 15;
-		  end if;
-
-	       when turn_around_write =>
-
-		  serial_data <= '0';
-
-		  data_read_back(counter_tot) <= '0';
-		  counter_tot := counter_tot - 1;
-
-		  stato := scrivi_dato_back;
+	       if counter > 0 then
+		  counter := counter - 1;
+	       else
+		  stato := leggi_dato;
 		  counter := 15;
+	       end if;
 
-	       when leggi_dato =>
+	    when turn_around_write =>
 
-		  if counter > 0 then
-		     counter := counter - 1;
-		  else
-		     stato := aspetta_preamble;
-		     dato_ricevuto_loc <= not dato_ricevuto_loc;
-		     counter := 31;
-		  end if;
+	       serial_data <= '0';
 
-	       when scrivi_dato_back =>
+	       stato := scrivi_dato_back;
+	       counter := 15;
 
-		  serial_data <= data_write_back (counter);
+	    when leggi_dato =>
 
-		  if counter > 0 then
-		     counter := counter - 1;
-		  else
-		     stato := aspetta_preamble;
-		     dato_ricevuto_loc <= not dato_ricevuto_loc;
-		     counter := 31;
-		  end if;
-	    end case;
+	       data_read_back(counter) <= serial_data;
 
-	    if counter_tot >= 0 then
+	       if counter > 0 then
+		  counter := counter - 1;
+	       else
+		  stato := aspetta_preamble;
+		  counter := 31;
+	       end if;
 
-	       data_read_back(counter_tot) <= serial_data;
+	    when scrivi_dato_back =>
 
-	       counter_tot := counter_tot - 1;
-	    end if;
+	       serial_data <= data_write_back (counter);
 
-	 end if;
+	       if counter > 0 then
+		  counter := counter - 1;
+	       else
+		  stato := aspetta_preamble;
+		  counter := 31;
+	       end if;
+	 end case;
+
       end if;
    end process;
 
