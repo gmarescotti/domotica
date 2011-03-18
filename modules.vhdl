@@ -95,12 +95,23 @@ package modules is
 	 word_address    : in std_logic_vector(7 downto 0);
 	 data_read       : out std_logic_vector(7 downto 0);
 	 data_write      : in std_logic_vector(7 downto 0);
-         read_write      : in std_logic;
+         op      	 : in std_logic_vector(1 downto 0);
+         -- 00: Byte Write: Start/Device address/Word Address/Data/Stop
+         -- 01: Random Read: Start/Device address/Word Address/Start/Device Address/Read Data
+         -- 10: Current Address Read
 	 serial_clock    : out std_logic := '0';
 	 serial_data     : inout std_logic := 'Z';
          start_conversion: in std_logic;
+         is_running      : buffer std_logic;
          error_code 	 : out std_logic_vector(2 downto 0)
 	);
+   end component;
+
+   component i2c_slave is
+      port (
+	 scl : in std_logic;
+	 sda : inout std_logic
+      );
    end component;
 
    -- component plasma_if is
