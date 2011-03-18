@@ -1,4 +1,4 @@
-TGT=mdio
+TGT=i2c
 TARGETS= $(TGT)_tb
 
 # TARGETS = pseudo_uart

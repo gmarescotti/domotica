@@ -33,6 +33,8 @@ end entity i2c;
 architecture rtl of i2c is
 
    signal serial_clock_out : std_logic := 'Z';
+   signal start_conversion_loc : std_logic := '0';
+
 begin
 
    process(double_clock_in, reset)
@@ -66,10 +68,11 @@ begin
  	 error_code <= "000";
          is_running <= '0';
          serial_data <= 'Z';
+         start_conversion_loc <= start_conversion;
 	 
       elsif rising_edge(double_clock_in) then
 
-	 assert false report std_logic'image(x) & "," & tipo_stato'image(stato) severity note;
+	 -- assert false report std_logic'image(x) & "," & tipo_stato'image(stato) severity note;
 
 	 if x = '1' then -- LEGGO SERIAL_DATA
 	    x := '0';
@@ -135,7 +138,8 @@ begin
 
 	       when wait_start =>
 
-		  if start_conversion = '1' then
+		  if start_conversion /= start_conversion_loc then
+                     start_conversion_loc <= start_conversion;
 		     stato := start;
 		     serial_data <= '1';
 		  else
@@ -155,7 +159,7 @@ begin
 
 	       when command =>
 
-                  -- Random Read oppure Current Address Read
+                  -- Random Read (dopo dummy write) oppure Current Address Read
 		  if stato_mem = start or op = "10" then
 		     serial_data <= '1'; -- READ MODE
 		     stato_mem := read8;

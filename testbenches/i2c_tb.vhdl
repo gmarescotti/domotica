@@ -32,11 +32,17 @@ architecture behav of i2c_tb is
    signal toggle_stop : std_logic := '0';
 
    signal is_running: std_logic;
+
+   signal device_address_back : std_logic_vector(7 downto 0);
+   signal word_address_back : std_logic_vector(7 downto 0);
+   signal data_write_back : std_logic_vector(7 downto 0);
+
+   signal DEVICE_ADDRESS : std_logic_vector(6 downto 0) := "1100001";
 begin
 
    x1 : i2c 
    	generic map (
-		   device_address => "1100001" -- "0101010"
+		   device_address => DEVICE_ADDRESS
 		) 
 	port map(
 	           reset => '0',
@@ -55,7 +61,11 @@ begin
    y1 : i2c_slave
 	port map(
 		   scl => scl,
-		   sda => sda
+		   sda => sda,
+		   dato_chiesto => dato_chiesto,
+                   device_address_back => device_address_back,
+                   word_address_back => word_address_back,
+                   data_write_back => data_write_back
 		);
 
    -- Clock process definitions
@@ -75,45 +85,74 @@ begin
    begin
       start_conversion <= '0';
 
---      ----------------------------------- FACCIO UNA SCRITTUTA di c6 in 59
---      data_write <= x"C6";
---      word_address <= x"59";
---      op <= "00"; -- write mode
---
---      -- INVIO START_CONVERSION
---      wait for 80 ns;
---      start_conversion <= '1';
---      wait on clock;
---      wait on clock;
---      start_conversion <= '0';
---
---      -- WAIT END OF SERIALIZATION
---      wait until is_running = '0';
---
---      assert false report "errore=" & integer'image(conv_integer(error_code)) severity note;
---
---      wait for 1 us;
+      -------------------------------------------------------------------
+      -- BYTE WRITE: START/DEVICEADDRESS/WRITE/WORDADDRESS/DATA/STOP
+      mylog("BYTE WRITE: START/DEVICEADDRESS/WRITE/WORDADDRESS/DATA/STOP");
 
-      ----------------------------------- FACCIO Current Address Read
-      -- Current Address READ: START/DEVICEADDRESS/READ/READDATA/STOP
-      op <= "10"; -- current address read mode
+      op <= "00"; -- write mode
+      data_write <= x"C6";
+      word_address <= x"59";
 
       -- INVIO START_CONVERSION
-      wait on clock;
-      wait on clock;
-      wait on clock;
-      start_conversion <= '1';
-      wait on clock;
-      wait on clock;
-      wait on clock;
-      start_conversion <= '0';
-
-      -- WAIT END OF SERIALIZATION
+      wait for 80 ns;
+      start_conversion <= not start_conversion;
       wait until is_running = '0';
 
-      -- STAMPO DATO SCRITTO DAME / LETTO DA DRIVER I2C
-      assert false report "data read = " & integer'image(conv_integer(data_read))  severity note;
-      assert false report "error = " & integer'image(conv_integer(error_code))  severity note;
+      mylog("DEVICE ADDRESS=", DEVICE_ADDRESS);
+      mylog("device_address_back=", device_address_back);
+
+      mylog("word_address=", word_address);
+      mylog("word_address_back=", word_address_back);
+
+      mylog("data_write=", data_write);
+      mylog("data_write_back=", data_write_back);
+
+      mylog("ERRORE=", error_code);
+
+      --------------------------------------------------------------------
+      -- CURRENT ADDRESS READ: START/DEVICEADDRESS/READ/READDATA/STOP
+      mylog("CURRENT ADDRESS READ: START/DEVICEADDRESS/READ/READDATA/STOP");
+
+      op <= "10"; -- current address read mode
+      dato_chiesto <= x"94";
+
+      -- INVIO START_CONVERSION
+      wait for 80 ns;
+      start_conversion <= not start_conversion;
+      wait until is_running = '0';
+
+      mylog("DEVICE ADDRESS=", DEVICE_ADDRESS);
+      mylog("device_address_back=", device_address_back);
+
+      mylog("DATO CHIESTO=", dato_chiesto);
+      mylog("DATA READ=", data_read);
+
+      mylog("ERROR=", error_code);
+
+      --------------------------------------------------------------------
+      -- RANDOM READ: START/DEVICEADDRESS/WRITE/WORDADDRESS/START/DEVICEADDRESS/READ/READDATA/STOP
+      --------------------------------------------------------------------
+      mylog("RANDOM READ: START/DEVICEADDRESS/WRITE/WORDADDRESS/START/DEVICEADDRESS/READ/READDATA/STOP");
+
+      op <= "01"; -- random read mode
+      dato_chiesto <= x"38";
+      word_address <= x"59";
+
+      -- INVIO START_CONVERSION
+      wait for 80 ns;
+      start_conversion <= not start_conversion;
+      wait until is_running = '0';
+
+      mylog("DEVICE ADDRESS=", DEVICE_ADDRESS);
+      mylog("device_address_back=", device_address_back);
+
+      mylog("word_address=", word_address);
+      mylog("word_address_back=", word_address_back);
+
+      mylog("DATO CHIESTO=", dato_chiesto);
+      mylog("DATA READ=", data_read);
+
+      mylog("ERROR=", error_code);
 
       --------------------------------------------------------------------
       stop <= '1';

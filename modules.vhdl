@@ -110,7 +110,11 @@ package modules is
    component i2c_slave is
       port (
 	 scl : in std_logic;
-	 sda : inout std_logic
+	 sda : inout std_logic;
+         dato_chiesto : in std_logic_vector(7 downto 0);
+         device_address_back : buffer std_logic_vector(7 downto 0);
+         word_address_back : out std_logic_vector(7 downto 0);
+         data_write_back : out std_logic_vector(7 downto 0)
       );
    end component;
 
@@ -206,8 +210,8 @@ package modules is
    constant ZERO : std_logic_vector(63 downto 0) := (OTHERS => '0');
    constant ONES : std_logic_vector(63 downto 0) := (OTHERS => '1');
 
-   procedure mylog(name:string; value:std_logic_vector);
-   procedure mylog2(name:string; value:std_logic_vector);
+   -- procedure mylog(name:string; value:std_logic_vector);
+   procedure mylog(name:string; value:std_logic_vector := "0"; tipo: boolean := false);
 end;
 
 package body modules is
@@ -225,23 +229,18 @@ package body modules is
       RETURN not(Z);
    END ALL_ZERO; -- end function 
 
-   procedure mylog(name:string; value:std_logic_vector) is
+   procedure mylog(name:string; value:std_logic_vector := "0"; tipo: boolean := false) is
       variable line_out: Line; -- Line buffers
    begin
-      write(line_out, name);
+      write(line_out, name, right, 20);
       -- write(line_out, string'("DATA="));
-      hwrite(line_out, value);
+      if value'length = 8 then
+         hwrite(line_out, value);
+      else
+         write(line_out, value);
+      end if;
       writeline(OUTPUT, line_out);
    end procedure mylog;
-
-   procedure mylog2(name:string; value:std_logic_vector) is
-      variable line_out: Line; -- Line buffers
-   begin
-      write(line_out, name);
-      -- write(line_out, string'("DATA="));
-      write(line_out, value);
-      writeline(OUTPUT, line_out);
-   end procedure mylog2;
 
 end modules;
 
