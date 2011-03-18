@@ -27,25 +27,6 @@ package modules is
       ram_oe_n    : std_logic;
    end record;
 
-   type mdio_rec is record
-      -- mdio_sda    : std_logic; -- := 'Z';
-      -- mdio_scl    : std_logic;
-      data_read   : std_logic_vector(15 downto 0);
-      data_write  : std_logic_vector(15 downto 0);
-      opcode      : std_logic_vector(1 downto 0);
-      start_conversion : std_logic; -- := '0';
-      running_conversion  : std_logic;
-   end record;
-
-   type uart_rec is record
-      enable_read  : std_logic;
-      enable_write : std_logic;
-      data_in      : std_logic_vector(7 downto 0);
-      data_out     : std_logic_vector(7 downto 0);
-      busy_write   : std_logic;
-      data_avail   : std_logic;
-   end record;
-
    component mdio is
       generic (
       	 mdio_address    : std_logic_vector(4 downto 0);
@@ -163,10 +144,21 @@ package modules is
          uart_data_out        : in std_logic_vector(7 downto 0);
          uart_data_in         : out std_logic_vector(7 downto 0)
 
-   	 -- mdio_opcode  	      : out std_logic_vector(1 downto 0);	-- 00: Address 10: Read-Inc 01: Write
-   	 -- mdio_data_read       : in std_logic_vector(15 downto 0);
-   	 -- mdio_data_write      : out std_logic_vector(15 downto 0);
-   	 -- mdio_start_conversion: out std_logic
+         mdio_opcode  	 	: out std_logic_vector(1 downto 0);	-- 00: Address 10: Read-Inc 01: Write
+         mdio_data_read       	: in std_logic_vector(15 downto 0);
+         mdio_data_write      	: out std_logic_vector(15 downto 0);
+         mdio_start_conversion	: out std_logic
+         mdio_running_conversion   : in std_logic;
+         mdio_error_code           : in std_logic_vector(2 downto 0);
+
+         i2c_word_address    : out std_logic_vector(7 downto 0);
+         i2c_data_read       : in std_logic_vector(7 downto 0);
+         i2c_data_write      : out std_logic_vector(7 downto 0);
+         i2c_op      	  : out std_logic_vector(1 downto 0);
+         i2c_start_conversion: out std_logic;
+         i2c_is_running      : in std_logic;
+         i2c_error_code 	  : in std_logic_vector(2 downto 0)
+
       );
    end component;
 

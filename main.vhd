@@ -29,7 +29,7 @@ entity main is
 	  seg_out     : out std_logic_vector(7 downto 0);
 
 	  -- SERDES MDIO SERIAL
-	  -- mdio_sda    : inout std_logic := 'Z';
+	  mdio_sda    : inout std_logic := 'Z';
 	  -- mdio_scl    : out std_logic;
 
 	  -- SERDES CLK_REF
@@ -57,8 +57,6 @@ architecture Behavioral of main is
    -- signal opcode                    : std_logic_vector(1 downto 0);
    -- signal start_conversion          : std_logic := '0';
 
-   -- signal mdio1 : mdio_rec;
-
    -- signal data_write_back : std_logic_vector(15 downto 0);
 
    -- SIGNAL FOR UART
@@ -68,7 +66,6 @@ architecture Behavioral of main is
    -- signal uart_data_out     : std_logic_vector(7 downto 0);
    -- signal uart_busy_write   : std_logic;
    -- signal uart_data_avail   : std_logic;
-   signal uart1 : uart_rec := ('0','0',(OTHERS => '0'),(OTHERS => '0'), '0', '0');
 
    signal hexint : std_logic_vector(15 downto 0) := x"c1a0";  -- what to display
    signal reset : std_logic := '1';
@@ -102,22 +99,22 @@ begin
    );
 
    -- SERDES: MDIO serial master interface
---    serdes_io : mdio
---       generic map ( mdio_address => "11111", device_address => "11110")
---       port map ( 
---                reset		  => reset,
---                -- led		  => led(3 downto 0),
--- 
---                serial_clock       => serial_clock,
---                serial_data        => mdio_sda,
--- 	       
---                opcode             => mdio1.opcode,
---                data_read          => mdio1.data_read,
---                data_write         => mdio1.data_write,
---                start_conversion   => mdio1.start_conversion,
--- 	       
---                running_conversion => mdio1.running_conversion
---       );
+   serdes_io : mdio
+      generic map ( mdio_address => "11111", device_address => "11110")
+      port map ( 
+                reset		  => reset,
+                -- led		  => led(3 downto 0),
+ 
+                serial_clock       => serial_clock,
+                serial_data        => mdio_sda,
+ 	       
+                opcode             => mdio_opcode,
+                data_read          => mdio_data_read,
+                data_write         => mdio_data_write,
+                start_conversion   => mdio_start_conversion,
+ 	       
+                running_conversion => mdio_running_conversion
+       );
 
    -- SFP: Small form-factor pluggable transceiver 
    sfp_io : i2c 
@@ -150,8 +147,28 @@ begin
          reset => reset,
          clk_in => clk_in, clkref_serdes => clkref_serdes, serial_clock => serial_clock, -- CLOCKS
          led => led(7 downto 5), hexint => hexint,
-         uart_enable_read => uart1.enable_read, uart_enable_write => uart1.enable_write, uart_busy_write => uart1.busy_write, uart_data_avail => uart1.data_avail, uart_data_out => uart1.data_out, uart_data_in => uart1.data_in -- UART
-         -- mdio_opcode => mdio1.opcode, mdio_data_read => mdio1.data_read, mdio_data_write => mdio1.data_write, mdio_start_conversion => mdio1.start_conversion -- MDIO
+
+         uart_enable_read => uart_enable_read,
+         uart_enable_write => uart_enable_write,
+         uart_busy_write => uart_busy_write,
+         uart_data_avail => uart_data_avail,
+         uart_data_out => uart_data_out,
+         uart_data_in => uart_data_in,
+
+         mdio_opcode => mdio_opcode,
+         mdio_data_read => mdio_data_read,
+         mdio_data_write => mdio_data_write,
+         mdio_start_conversion => mdio_start_conversion,
+         mdio_running_conversion => mdio_running_conversion,
+         mdio_error_code => mdio_error_code,
+
+         i2c_word_address => i2c_word_address,
+         i2c_data_read => i2c_data_read,
+         i2c_data_write => i2c_data_write,
+         i2c_op => i2c_op,
+         i2c_start_conversion => i2c_start_conversion,
+         i2c_is_running => i2c_is_running,
+         i2c_error_code => i2c_error_code
       );
 
    -- Istanzia la seriale UART a 57600 baud
@@ -159,13 +176,13 @@ begin
       port map (
          clk_in,
          reset,
-         uart1.enable_read,
-         uart1.enable_write,
-         uart1.data_in,
-         uart1.data_out,
+         uart_enable_read,
+         uart_enable_write,
+         uart_data_in,
+         uart_data_out,
          uart_read, uart_write, -- pins from physical serial port
-         uart1.busy_write,
-         uart1.data_avail
+         uart_busy_write,
+         uart_data_avail
       );
       -- uart_write <= '1';
 

@@ -43,14 +43,24 @@ entity uart_menu is
       uart_enable_write : buffer std_logic := '0';
       uart_busy_write   : in std_logic;
       uart_data_avail   : in std_logic;
-
       uart_data_out    	: in std_logic_vector(7 downto 0);
       uart_data_in     	: out std_logic_vector(7 downto 0)
 
-      -- mdio_opcode  	 	: out std_logic_vector(1 downto 0);	-- 00: Address 10: Read-Inc 01: Write
-      -- mdio_data_read       	: in std_logic_vector(15 downto 0);
-      -- mdio_data_write      	: out std_logic_vector(15 downto 0);
-      -- mdio_start_conversion	: out std_logic
+      mdio_opcode  	 	: out std_logic_vector(1 downto 0);	-- 00: Address 10: Read-Inc 01: Write
+      mdio_data_read       	: in std_logic_vector(15 downto 0);
+      mdio_data_write      	: out std_logic_vector(15 downto 0);
+      mdio_start_conversion	: out std_logic
+      mdio_running_conversion   : in std_logic;
+      mdio_error_code           : in std_logic_vector(2 downto 0);
+
+      i2c_word_address    : out std_logic_vector(7 downto 0);
+      i2c_data_read       : in std_logic_vector(7 downto 0);
+      i2c_data_write      : out std_logic_vector(7 downto 0);
+      i2c_op      	  : out std_logic_vector(1 downto 0);
+      i2c_start_conversion: out std_logic;
+      i2c_is_running      : in std_logic;
+      i2c_error_code 	  : in std_logic_vector(2 downto 0)
+
    );
 end uart_menu;
 
@@ -143,8 +153,9 @@ begin
 
    -----------------------------------------------------------------------------------------
    -- Processo che esegue i comandi da UART e risponde l'esito a UART.
-   -- Ogni comando è una sequenza di char finiti da CR.
+   -- Ogni comando e' una sequenza di char finiti da CR.
    -- process_command : process (flag_rxed_message, reset, data_rxed) is
+
    process_command : process (flag_rxed_message, reset) is
       variable counter_loc : integer range 0 to arr_type'length - 1 := 0;
    begin
@@ -153,23 +164,9 @@ begin
  	 counter_tx <= 0;
 	 
       elsif rising_edge(flag_rxed_message) then
- -- assert false report "RICEVUTO COMANDO " & integer'image(conv_integer(data_rxed(0))) severity note;
  
          case data_rxed(0) is
-            when x"01" =>	-- invio dato in MDIO
-               counter_loc := 0;
- 
-               -- mdio_data_write <= data_rxed(2) & data_rxed(3);
-               -- mdio_opcode <= data_rxed(1) (1 downto 0);
- 	       -- assert data_rxed(1)(7 downto 2) = "000000" report "mdio-opcode diverso da 00 01 10 11";
-               -- mdio_start_conversion_loc <= not mdio_start_conversion_loc; -- START!
- 
-            when x"02" => -- lettura dato da MDIO
-               counter_loc := 0;
-               -- data_tobe_txed(1) <= mdio_data_read(15 downto 8);
-               -- data_tobe_txed(0) <= mdio_data_read(7 downto 0);
-               -- counter_loc := 2;
-                
+            -------------------- DEBUG CLOCKS ------------------------
             when x"61" => -- 'a': start/stop calcolo e controllo REFCLK(serdes) e serial_clock
  	       case data_rxed(1) is
  
@@ -208,8 +205,48 @@ begin
  
  	       end case;
  
+            -------------------- GESTIONE MDIO ------------------------
+            when x"62" => -- 'b'
+ 	       case data_rxed(1) is
+                  when x"61" => -- invio dato in MDIO
+
+                     mdio_data_write <= data_rxed(2) & data_rxed(3);
+                     mdio_opcode <= data_rxed(1) (1 downto 0);
+ 	             assert data_rxed(1)(7 downto 2) = "000000" report "mdio-opcode diverso da 00 01 10 11";
+                     mdio_start_conversion_loc <= not mdio_start_conversion_loc; -- START!
+                     counter_loc := 0;
+ 
+                  when x"62" => -- lettura dato da MDIO
+                     counter_loc := 0;
+                     -- data_tobe_txed(1) <= mdio_data_read(15 downto 8);
+                     -- data_tobe_txed(0) <= mdio_data_read(7 downto 0);
+                     -- counter_loc := 2;
+                  when x"66" => -- lettura error_code
+                     data_tobetxed(0) <= mdio_error_code;
+               end case;
+
+            -------------------- GESTIONE I2C ------------------------
+            when x"63" => -- 'c'
+ 	       case data_rxed(1) is
+                  when x"61" => 	-- invio dato in MDIO
+
+                     counter_loc := 0;
+ 
+                     -- mdio_data_write <= data_rxed(2) & data_rxed(3);
+                     -- mdio_opcode <= data_rxed(1) (1 downto 0);
+ 	             -- assert data_rxed(1)(7 downto 2) = "000000" report "mdio-opcode diverso da 00 01 10 11";
+                     -- mdio_start_conversion_loc <= not mdio_start_conversion_loc; -- START!
+ 
+                  when x"62" => -- lettura dato da MDIO
+                     counter_loc := 0;
+                     -- data_tobe_txed(1) <= mdio_data_read(15 downto 8);
+                     -- data_tobe_txed(0) <= mdio_data_read(7 downto 0);
+                     -- counter_loc := 2;
+               end case;
+
  	       -- assert false report "clock:" & integer'image(conv_integer(data_tobe_txed(1))) & integer'image(conv_integer(data_tobe_txed(0))) severity note;
  
+            --------------------- ECHO AUTOTEST -----------------------
             when x"78" => -- 'x': AUTOTEST2
                -- gpioA_in <= gpio0_out;
                data_tobe_txed(4) <= data_rxed(1); -- CONV_STD_LOGIC_VECTOR(character'pos('a'), 8);
@@ -219,33 +256,32 @@ begin
                data_tobe_txed(0) <= data_rxed(5); -- CONV_STD_LOGIC_VECTOR(character'pos(CR), 8);
                counter_loc := 5;
  
-            when x"06" =>
-               -- gpioA_in <= data_read_back;
-               data_tobe_txed(0) <= x"AA";
-               counter_loc := 1;
- 
+            ------------------------------------------------------------
             when others =>
                data_tobe_txed(0) <= x"EE";
                counter_loc := 1;
                -- led(7) <= not led(7);
          end case;
  
+         ----------------------------------------------------------------------
          data_tobe_txed(counter_loc) <= data_rxed(0);
  
- 	 -- assert counter_loc < data_tobe_txed'length and counter_loc > 0 report "counter_loc out of bound:" & integer'image(counter_loc);
+ 	 assert counter_loc < data_tobe_txed'length and counter_loc > 0 
+            report "counter_loc out of bound:" & integer'image(counter_loc)
+            severity error;
  
          counter_tx <= counter_loc + 1;
+         -- Il messaggio preparato viene inviato dal processo seguente
+         -- Il quale processo viene schedulato da flag_rxed_message
+         -- ritardato di qualche clock (monostabile)
 	 
       end if; -- reset
  
    end process;
 
    -----------------------------------------------------------------------------------------
+   -- creo combi come flag_rxed_message ritardato. In pratica il processo e' un monostabile
 
---   led(0) <= combi;
---   led(1) <= uart_enable_write;
---   led(2) <= flag_rxed_message;
-   
    combi_pro: process(clk_in) is
       variable cnt : integer := 0;
    begin
@@ -267,6 +303,10 @@ begin
 
       end if;
    end process;
+   
+--   led(0) <= combi;
+--   led(1) <= uart_enable_write;
+--   led(2) <= flag_rxed_message;
    
    combi2 <= combi or uart_busy_write;
    
@@ -365,6 +405,7 @@ begin
 		      "110" when errore2,
 		      "111" when others;
    
+    ----------------------------------------------------------------------------
     -- Processo che calcola i clock usati
     clk_calculator: process(clk_in, clkref_serdes, serial_clock, reset)
        variable counter : natural := 0;
