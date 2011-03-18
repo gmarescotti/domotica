@@ -21,7 +21,7 @@ tmp:
 	mkdir tmp
 
 ##########################################################
-i2c_tb : ../modules.o i2c_tb.o ../i2c.o
+i2c_tb : ../modules.o i2c_tb.o ../i2c.o i2c_slave.o
 
 main_tb: ../modules.o main_tb.o ../uart_menu.o ../main.o ../mdio.o mdio_slave.o ../i2c.o dummy_clocks.o ../myuart.o pseudo_uart.o ../display7seg.o
 
