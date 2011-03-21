@@ -21,7 +21,7 @@ tmp:
 	mkdir tmp
 
 ##########################################################
-main_tb: ../modules.o main_tb.o ../uart_menu.o ../main.o ../mdio.o mdio_slave.o ../i2c.o i2c_slave.o dummy_clocks.o ../myuart.o pseudo_uart.o
+main_tb: ../modules.o main_tb.o ../uart_menu.o ../main.o ../mdio.o mdio_slave.o ../i2c.o i2c_slave.o dummy_clocks.o ../myuart.o pseudo_uart.o ../display7seg.o
 
 #../display7seg.o
 
@@ -50,7 +50,8 @@ $(TARGETS):
 %.vcd: %_tb
 	@echo Adesso creo diagramma $@ da testbench $<
 	@echo digita gtkwave $@, per vedere il diagramma
-	$(GHDL) -r $(OPTS) $< --vcd=$@
+
+# $(GHDL) -r $(OPTS) $< --vcd=$@
 # $(GHDL) -r $(OPTS) $< --vcd=$@ --assert-level=note
 # --stop-time=1ms
 

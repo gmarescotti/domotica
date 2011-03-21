@@ -43,6 +43,7 @@ begin
 	 loc_data_in, loc_data_out, uart_write, uart_read,
          loc_busy_write, loc_data_avail);
 
+   loc_enable_read <= '1';
    --------------------------------------------------------
    read_stdin:
    process
@@ -50,6 +51,9 @@ begin
       variable myline : LINE;
       variable c : std_ulogic := '1';
       variable ch : character;
+      type stringa is array (30 downto 0) of std_logic_vector(7 downto 0);
+      variable buf : stringa;
+      variable n : integer;
 
       -- file my_input : TEXT open READ_MODE is "giulio-in.txt";
    begin
@@ -58,46 +62,65 @@ begin
       wait until falling_edge(reset);
       -- wait for 100 us;
 
-      loop
+      cicla_stdin: loop
         exit when endfile(input);
 
-assert false report "Waiting COMMAND..." severity note;
+-- assert false report "Waiting COMMAND..." severity note;
 
         readline(input, my_input_line);
-	for i in 1 to my_input_line'length loop
-           read(my_input_line, ch);
+	n:= my_input_line'length;
 
+	if n > stringa'length then
+	   mylog("STRINGA TROPPO LUNGA");
+	   next cicla_stdin;
+	end if;
+
+	for i in 1 to n loop
+           read(my_input_line, ch);
+	   buf(i) := CONV_STD_LOGIC_VECTOR(character'pos(ch),8);
+	end loop;
+
+-- mylog("N=",CONV_STD_LOGIC_VECTOR(n,8));
+	for i in 1 to n loop
            -----------------------------------------
            -- devo trasmette su uart_rx quello che ho letto da stdin
            -- instanto lo stampo a terminale: funzione echo
-           -- write(myline, ch);
+           -- write(myline, buf(i));
            -- writeline(output, myline);
 
-           loc_data_in <= CONV_STD_LOGIC_VECTOR(character'pos(ch), 8);
+           loc_data_in <= buf(i);
            loc_enable_write <= '1';
-           wait until falling_edge(loc_busy_write);
-           loc_enable_write <= '0';
+
+-- mylog("TXING:", buf(i));
+	   wait until rising_edge(loc_busy_write);
+	   loc_enable_write <= '0';
+	   wait until falling_edge(loc_busy_write);
+	   loc_enable_write <= '0';
+
            -- wait for 10 us;
 
 	end loop;
 
-assert false report "managing..." severity note;
+	-- wait until rising_edge(loc_data_avail);
+	-- wait until rising_edge(loc_data_avail);
+
+-- assert false report "managing..." severity note;
         -- GGG wait for 10 us;
         -- SEND CARRIAGE RETURN/LINE FEED INSIDE UART_MENU THROW UART
         loc_data_in <= CR_CODE; -- CONV_STD_LOGIC_VECTOR(character'pos(CR_CHAR), 8);
         loc_enable_write <= '1';
         wait until falling_edge(loc_busy_write);
-assert false report "0..." severity note;
+-- assert false report "0..." severity note;
         loc_enable_write <= '0';
 
         -- WAIT ANSWER FROM UART_MENU
         wait until rising_edge(loc_data_avail);
-assert false report "1..." severity note;
+-- assert false report "1..." severity note;
         wait until rising_edge(loc_data_avail);
-assert false report "2..." severity note;
+-- assert false report "2..." severity note;
         -- wait for 700 us;
         wait until loc_data_avail'stable(580 us);
-assert false report "3..." severity note;
+-- assert false report "3..." severity note;
 
       end loop;
 
@@ -121,9 +144,9 @@ assert false report "3..." severity note;
       else
 
          data <= loc_data_out;
-         loc_enable_read <= '1';
+         -- loc_enable_read <= '1';
          wait until loc_data_avail = '0';
-         loc_enable_read <= '0';
+         -- loc_enable_read <= '0';
 
          if data = CR_CODE then
             writeline(output, l); -- myoutput

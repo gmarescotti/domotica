@@ -115,7 +115,7 @@ begin
  	 if rising_edge(uart_data_avail) then
  
  	    -- hexint(15 downto 8) <= uart_data_out;
-	    mylog("RX: ", uart_data_out);
+	    -- mylog("RX: ", uart_data_out);
  
  	    case uart_data_out is
  	       when CR_CODE => -- CARRIAGE RETURN
@@ -166,7 +166,8 @@ begin
 	 
       elsif rising_edge(flag_rxed_message) then
  
-	 mylog("data_rxed(0)=", data_rxed(0));
+	 -- mylog("data_rxed(0)=", data_rxed(0));
+	 -- mylog("data_rxed(1)=", data_rxed(1));
          case data_rxed(0) is
 
             -------------------- DEBUG CLOCKS ------------------------
@@ -177,16 +178,19 @@ begin
  	             -- assert false report "start clock!" severity note;
 		     if data_rxed(2) = character'pos('1') then
                         start_clock_test <= '1';
+			counter_loc := 0;
 		     elsif data_rxed(2) = character'pos('0') then
                         start_clock_test <= '0';
+			counter_loc := 0;
 		     else
 		        data_tobe_txed(0) <= x"EF";
                         counter_loc := 1;
 		     end if;
-                     counter_loc := 0;
  	          when x"62" =>
                      data_tobe_txed(1) <= numof_refclock(15 downto 8);
                      data_tobe_txed(0) <= numof_refclock(7  downto 0);
+		     -- mylog("data_tobe_txed", data_tobe_txed(1));
+		     -- mylog("data_tobe_txed", data_tobe_txed(0));
  
                      counter_loc := 2;
  
@@ -335,7 +339,7 @@ begin
 	 counter := 0;
    
       elsif rising_edge(combi2) then
-	 mylog("COMBI!", std_logic_vector(to_unsigned(counter_tx, 8)));
+	 -- mylog("COMBI!", std_logic_vector(to_unsigned(counter_tx, 8)));
 
          NNN := NNN + 1;
          hexint(15 downto 8) <= std_logic_vector(to_unsigned(NNN, 8));

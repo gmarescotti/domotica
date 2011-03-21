@@ -40,7 +40,7 @@ proc invia { { verbose true } args } {
       }
 
       set coded [ binary format c $num ]
-      if $verbose { puts "STO INVIANDO $num" }
+      if $verbose { puts "STO INVIANDO [ format %x $num ]" }
       puts -nonewline $tb $coded
    }
    puts -nonewline $tb "\x0a"
@@ -75,7 +75,7 @@ proc ricevi { command_check { verbose true } { onenumber false } } {
    foreach num $vars {
       set num [ expr $num & 0xFF ]
 
-      if $verbose { puts "RICEVUTO: $num" }
+      if $verbose { puts "RICEVUTO: [ format %x $num ]" }
       if { $flag_special == 1 } {
 	 set num [ expr ~$num & 0xFF ]
       } else {
@@ -166,7 +166,7 @@ proc test_clocks {} {
   
    # PERDO UN PO' DI TEMPO PER IL SIMULATORE BLOCCATO SULLA GETLINE
    # PIUTTOSTO CHE SUL CALCOLO DEI CLOCKS... 
-   invia true 0x78 8 1 2 3 4 5
+   invia true 0x78 0x61 0x62 0x63 0x64
    ricevi 0x78 true
 
    invia true 0x61 0x63 ;# CLKCLOCK

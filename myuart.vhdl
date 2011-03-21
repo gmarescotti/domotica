@@ -94,6 +94,7 @@ begin
             -- GGG data_write_reg <= data_in & '0';        --remember data & start bit
             bits_write_reg <= "1011";               --number of bits to write: AGGIUNGO UN UNO PER RITARDARE
             data_write_reg <= data_in & '0';        --remember data & start bit
+-- mylog("TRAS: ", data_in);
 
          end if;
       else
@@ -153,6 +154,7 @@ begin
          -- data_save_reg(8 downto 0) <= data_save_reg(17 downto 9);
 	 data_avail <= data_save_reg(8);
 	 if data_save_reg(8) = '1' then
+-- assert false report "CIAO: " & integer'image(conv_integer(data_save_reg(7 downto 0))) severity note;
 	    data_save_reg(8) <= '0';
 	 end if;
 	 -- GGG
