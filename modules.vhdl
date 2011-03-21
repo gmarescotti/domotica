@@ -137,17 +137,17 @@ package modules is
          hexint		 : out std_logic_vector(15 downto 0);
 
          uart_enable_read     : buffer std_logic;
-         uart_enable_write    : out std_logic;
+         uart_enable_write    : buffer std_logic;
          uart_busy_write      : in std_logic;
          uart_data_avail      : in std_logic;
 
          uart_data_out        : in std_logic_vector(7 downto 0);
-         uart_data_in         : out std_logic_vector(7 downto 0)
+         uart_data_in         : out std_logic_vector(7 downto 0);
 
          mdio_opcode  	 	: out std_logic_vector(1 downto 0);	-- 00: Address 10: Read-Inc 01: Write
          mdio_data_read       	: in std_logic_vector(15 downto 0);
          mdio_data_write      	: out std_logic_vector(15 downto 0);
-         mdio_start_conversion	: out std_logic
+         mdio_start_conversion	: buffer std_logic;
          mdio_running_conversion   : in std_logic;
          mdio_error_code           : in std_logic_vector(2 downto 0);
 
@@ -155,7 +155,7 @@ package modules is
          i2c_data_read       : in std_logic_vector(7 downto 0);
          i2c_data_write      : out std_logic_vector(7 downto 0);
          i2c_op      	  : out std_logic_vector(1 downto 0);
-         i2c_start_conversion: out std_logic;
+         i2c_start_conversion: buffer std_logic;
          i2c_is_running      : in std_logic;
          i2c_error_code 	  : in std_logic_vector(2 downto 0)
 
@@ -224,12 +224,16 @@ package body modules is
    procedure mylog(name:string; value:std_logic_vector := "0"; tipo: boolean := false) is
       variable line_out: Line; -- Line buffers
    begin
-      write(line_out, name, right, 20);
-      -- write(line_out, string'("DATA="));
-      if value'length = 8 then
-         hwrite(line_out, value);
+      if value'length = 1 then
+         write(line_out, name);
       else
-         write(line_out, value);
+         write(line_out, name, right, 20);
+         -- write(line_out, string'("DATA="));
+         if value'length = 8 then
+            hwrite(line_out, value);
+         else
+            write(line_out, value);
+         end if;
       end if;
       writeline(OUTPUT, line_out);
    end procedure mylog;

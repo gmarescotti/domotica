@@ -23,15 +23,15 @@ architecture behav of mdio_tb is
    signal data_read : std_logic_vector(15 downto 0);
    signal data_write : std_logic_vector(15 downto 0);
 
+   signal reset : std_logic := '0';
+   signal error_code : std_logic_vector(2 downto 0);
+
+   signal stop : std_logic := '0';
+
    -- TESTER_MDIO
    signal data_write_back : std_logic_vector(15 downto 0);
    signal data_read_back  : std_logic_vector(15 downto 0);
-
-   signal reset : std_logic := '0';
-   signal error_code : std_logic_vector(2 downto 0);
    signal error_code_slave : std_logic_vector(2 downto 0);
-   signal stop : std_logic := '0';
-
    signal opcode_slave : std_logic_vector(1 downto 0);
    signal addr    : std_logic_vector(4 downto 0);
    signal devaddr : std_logic_vector(4 downto 0);

@@ -26,13 +26,12 @@ architecture behav of i2c_tb is
    signal word_address : std_logic_vector(7 downto 0);
    signal data_write : std_logic_vector(7 downto 0);
 
-   signal dato_chiesto : std_logic_vector(7 downto 0);
-
    signal toggle_start : std_logic := '0';
    signal toggle_stop : std_logic := '0';
 
    signal is_running: std_logic;
 
+   signal dato_chiesto : std_logic_vector(7 downto 0);
    signal device_address_back : std_logic_vector(7 downto 0);
    signal word_address_back : std_logic_vector(7 downto 0);
    signal data_write_back : std_logic_vector(7 downto 0);

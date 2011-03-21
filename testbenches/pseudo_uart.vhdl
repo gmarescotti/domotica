@@ -1,22 +1,4 @@
 ----------------------------------------------------------------------------------
--- Company: 
--- Engineer: 
--- 
--- Create Date:    21:57:10 11/12/2010 
--- Design Name: 
--- Module Name:    UART BRIDGE
--- Project Name: 
--- Target Devices: 
--- Tool versions: 
--- Description: 
---
--- Dependencies: 
---
--- Revision: 
--- Revision 0.01 - File Created
--- Additional Comments: 
---
-----------------------------------------------------------------------------------
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
@@ -79,7 +61,7 @@ begin
       loop
         exit when endfile(input);
 
--- assert false report "Waiting COMMAND..." severity note;
+assert false report "Waiting COMMAND..." severity note;
 
         readline(input, my_input_line);
 	for i in 1 to my_input_line'length loop
@@ -99,20 +81,26 @@ begin
 
 	end loop;
 
+assert false report "managing..." severity note;
         -- GGG wait for 10 us;
         -- SEND CARRIAGE RETURN/LINE FEED INSIDE UART_MENU THROW UART
         loc_data_in <= CR_CODE; -- CONV_STD_LOGIC_VECTOR(character'pos(CR_CHAR), 8);
         loc_enable_write <= '1';
         wait until falling_edge(loc_busy_write);
+assert false report "0..." severity note;
         loc_enable_write <= '0';
 
         -- WAIT ANSWER FROM UART_MENU
         wait until rising_edge(loc_data_avail);
+assert false report "1..." severity note;
         wait until rising_edge(loc_data_avail);
+assert false report "2..." severity note;
         -- wait for 700 us;
         wait until loc_data_avail'stable(580 us);
+assert false report "3..." severity note;
 
       end loop;
+
       assert false report "NONE. End of simulation." severity failure;
       wait; -- one shot at time zero,
    end process read_stdin;

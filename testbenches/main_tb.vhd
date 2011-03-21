@@ -38,14 +38,10 @@ ARCHITECTURE behavior OF main_tb IS
 	  mod_def     : inout std_logic_vector(2 downto 0);
 
 	  -- UTILITY
-	  led_out     : out std_logic_vector(7 downto 0);
+	  led         : buffer std_logic_vector(7 downto 0);
 	  tasto       : in std_logic_vector(7 downto 0);
 	  digit_out   : out std_logic_vector(3 downto 0);
 	  seg_out     : out std_logic_vector(7 downto 0);
-
-	  -- SFP I2C SERIAL
-	  i2c_sda	  : inout std_logic;
-	  i2c_scl	  : out std_logic;
 
 	  -- SERDES MDIO SERIAL
 	  mdio_sda    : inout std_logic := 'Z';
@@ -95,6 +91,19 @@ ARCHITECTURE behavior OF main_tb IS
    signal serial_clock 	: std_logic;
    signal clkref_serdes : std_logic;
    
+   -- I2C SLAVE
+   signal i2c_slave_dato_chiesto : std_logic_vector(7 downto 0);
+   signal i2c_slave_device_address_back : std_logic_vector(7 downto 0);
+   signal i2c_slave_word_address_back : std_logic_vector(7 downto 0);
+   signal i2c_slave_data_write_back : std_logic_vector(7 downto 0);
+
+   -- MDIO SLAVE
+   signal mdio_slave_data_write_back : std_logic_vector(15 downto 0);
+   signal mdio_slave_data_read_back  : std_logic_vector(15 downto 0);
+   signal mdio_slave_error_code : std_logic_vector(2 downto 0);
+   signal mdio_slave_opcode : std_logic_vector(1 downto 0);
+   signal mdio_slave_addr    : std_logic_vector(4 downto 0);
+   signal mdio_slave_devaddr : std_logic_vector(4 downto 0);
 BEGIN
 
    -- Instantiate the Unit Under Test (UUT)
@@ -102,35 +111,51 @@ BEGIN
 	GENERIC MAP (
 	  test_bench => 1
 	) PORT MAP (
-          los => los,
-          rate_select => rate_select,
-          t_dis => t_dis,
-          t_fault => t_fault,
-          mod_def => mod_def,
+          los 		=> los,
+          rate_select 	=> rate_select,
+          t_dis 	=> t_dis,
+          t_fault 	=> t_fault,
+          mod_def 	=> mod_def,
 
-          led_out => led,
-          tasto => tasto,
+          led 		=> led,
+          tasto 	=> tasto,
+	  digit_out	=> open,
+	  seg_out	=> open,
 
-          mdio_sda => mdio_sda,
-          mdio_scl => mdio_scl,
-          i2c_sda => i2c_sda,
-          i2c_scl => i2c_scl,
+          mdio_sda 	=> mdio_sda,
+          mdio_scl 	=> mdio_scl,
 
 	  clkref_serdes_p => clkref_serdes_p,
+	  clkref_serdes_n => open,
 
-          clk_in => clk_in,
-          reset => reset,
-          uart_read => uart_read,
-          uart_write => uart_write
+          clk_in 	=> clk_in,
+          reset 	=> reset,
+          uart_read 	=> uart_read,
+          uart_write 	=> uart_write
         );
 
    -- SERDES-TESTER: MDIO serial slave
    t1 : mdio_slave
    port map(
-      reset,
-      serial_clock, mdio_sda,
-      data_read_back, X"1968", -- data_write_back,
-      dato_ricevuto
+      reset 		=> reset,
+      serial_clock 	=> mdio_scl,
+      serial_data 	=> mdio_sda,
+      data_read_back 	=> mdio_slave_data_read_back,
+      data_write_back 	=> mdio_slave_data_write_back,
+      error_code 	=> mdio_slave_error_code,
+      opcode 		=> mdio_slave_opcode,
+      addr 		=> mdio_slave_addr,
+      devaddr 		=> mdio_slave_devaddr
+   );
+
+   y1 : i2c_slave
+   port map(
+      scl 		  => i2c_scl,
+      sda 		  => i2c_sda,
+      dato_chiesto 	  => i2c_slave_dato_chiesto,
+      device_address_back => i2c_slave_device_address_back,
+      word_address_back   => i2c_slave_word_address_back,
+      data_write_back 	  => i2c_slave_data_write_back
    );
 
    -- RI-Genero tutti i clock del progetto all'interno del testbench
@@ -161,7 +186,8 @@ BEGIN
       reset <= '1';
       wait for 100 us;
       reset <= '0';
-assert false report "FINE RESET" severity note;
+      -- assert false report "FINE RESET" severity note;
+      -- mylog("Fine RESET");
       wait;
    end process;
 END;

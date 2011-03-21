@@ -44,12 +44,12 @@ entity uart_menu is
       uart_busy_write   : in std_logic;
       uart_data_avail   : in std_logic;
       uart_data_out    	: in std_logic_vector(7 downto 0);
-      uart_data_in     	: out std_logic_vector(7 downto 0)
+      uart_data_in     	: out std_logic_vector(7 downto 0);
 
       mdio_opcode  	 	: out std_logic_vector(1 downto 0);	-- 00: Address 10: Read-Inc 01: Write
       mdio_data_read       	: in std_logic_vector(15 downto 0);
       mdio_data_write      	: out std_logic_vector(15 downto 0);
-      mdio_start_conversion	: out std_logic
+      mdio_start_conversion	: buffer std_logic;
       mdio_running_conversion   : in std_logic;
       mdio_error_code           : in std_logic_vector(2 downto 0);
 
@@ -57,7 +57,7 @@ entity uart_menu is
       i2c_data_read       : in std_logic_vector(7 downto 0);
       i2c_data_write      : out std_logic_vector(7 downto 0);
       i2c_op      	  : out std_logic_vector(1 downto 0);
-      i2c_start_conversion: out std_logic;
+      i2c_start_conversion: buffer std_logic;
       i2c_is_running      : in std_logic;
       i2c_error_code 	  : in std_logic_vector(2 downto 0)
 
@@ -115,6 +115,7 @@ begin
  	 if rising_edge(uart_data_avail) then
  
  	    -- hexint(15 downto 8) <= uart_data_out;
+	    mylog("RX: ", uart_data_out);
  
  	    case uart_data_out is
  	       when CR_CODE => -- CARRIAGE RETURN
@@ -165,7 +166,9 @@ begin
 	 
       elsif rising_edge(flag_rxed_message) then
  
+	 mylog("data_rxed(0)=", data_rxed(0));
          case data_rxed(0) is
+
             -------------------- DEBUG CLOCKS ------------------------
             when x"61" => -- 'a': start/stop calcolo e controllo REFCLK(serdes) e serial_clock
  	       case data_rxed(1) is
@@ -207,13 +210,14 @@ begin
  
             -------------------- GESTIONE MDIO ------------------------
             when x"62" => -- 'b'
- 	       case data_rxed(1) is
+ 	       mdio_case: case data_rxed(1) is
+
                   when x"61" => -- invio dato in MDIO
 
                      mdio_data_write <= data_rxed(2) & data_rxed(3);
                      mdio_opcode <= data_rxed(1) (1 downto 0);
  	             assert data_rxed(1)(7 downto 2) = "000000" report "mdio-opcode diverso da 00 01 10 11";
-                     mdio_start_conversion_loc <= not mdio_start_conversion_loc; -- START!
+                     mdio_start_conversion <= not mdio_start_conversion; -- START!
                      counter_loc := 0;
  
                   when x"62" => -- lettura dato da MDIO
@@ -221,8 +225,12 @@ begin
                      -- data_tobe_txed(1) <= mdio_data_read(15 downto 8);
                      -- data_tobe_txed(0) <= mdio_data_read(7 downto 0);
                      -- counter_loc := 2;
-                  when x"66" => -- lettura error_code
-                     data_tobetxed(0) <= mdio_error_code;
+                  -- when x"66" => -- lettura error_code
+                     -- data_tobetxed(0) <= mdio_error_code;
+
+		  when others =>
+		     --
+		     counter_loc := 0;
                end case;
 
             -------------------- GESTIONE I2C ------------------------
@@ -242,6 +250,9 @@ begin
                      -- data_tobe_txed(1) <= mdio_data_read(15 downto 8);
                      -- data_tobe_txed(0) <= mdio_data_read(7 downto 0);
                      -- counter_loc := 2;
+		  when others =>
+		     --
+                     counter_loc := 0;
                end case;
 
  	       -- assert false report "clock:" & integer'image(conv_integer(data_tobe_txed(1))) & integer'image(conv_integer(data_tobe_txed(0))) severity note;
@@ -266,7 +277,7 @@ begin
          ----------------------------------------------------------------------
          data_tobe_txed(counter_loc) <= data_rxed(0);
  
- 	 assert counter_loc < data_tobe_txed'length and counter_loc > 0 
+ 	 assert counter_loc < data_tobe_txed'length and counter_loc >= 0 
             report "counter_loc out of bound:" & integer'image(counter_loc)
             severity error;
  
@@ -324,6 +335,7 @@ begin
 	 counter := 0;
    
       elsif rising_edge(combi2) then
+	 mylog("COMBI!", std_logic_vector(to_unsigned(counter_tx, 8)));
 
          NNN := NNN + 1;
          hexint(15 downto 8) <= std_logic_vector(to_unsigned(NNN, 8));

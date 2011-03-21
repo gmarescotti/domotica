@@ -3,8 +3,8 @@ use IEEE.STD_LOGIC_1164.ALL;
 
 use WORK.modules.all;
 
-Library UNISIM;
-use UNISIM.vcomponents.all;
+-- Library UNISIM;
+-- use UNISIM.vcomponents.all;
 
 entity main is
    generic ( 
@@ -30,15 +30,15 @@ entity main is
 
 	  -- SERDES MDIO SERIAL
 	  mdio_sda    : inout std_logic := 'Z';
-	  -- mdio_scl    : out std_logic;
+	  mdio_scl    : out std_logic;
 
 	  -- SERDES CLK_REF
-	   clkref_serdes_p: out std_logic;
-	   clkref_serdes_n: out std_logic;
+	  clkref_serdes_p: out std_logic;
+	  clkref_serdes_n: out std_logic;
 
 	  -- PLASMA CPU PINS
 	  clk_in      : in std_logic;
-	  reset_in    : in std_logic;
+	  reset       : in std_logic;
 	  uart_read   : in std_logic;
 	  uart_write  : out std_logic
 
@@ -47,28 +47,38 @@ end main;
 
 architecture Behavioral of main is
 
-   -- signal running_conversion : std_logic;
-
-    signal serial_clock 	: std_logic;
-    signal clkref_serdes : std_logic;
-
-   -- signal data_read                 : std_logic_vector(15 downto 0);
-   -- signal data_write                : std_logic_vector(15 downto 0);
-   -- signal opcode                    : std_logic_vector(1 downto 0);
-   -- signal start_conversion          : std_logic := '0';
-
-   -- signal data_write_back : std_logic_vector(15 downto 0);
+   signal serial_clock 	: std_logic;
+   signal clkref_serdes : std_logic;
 
    -- SIGNAL FOR UART
-   -- signal uart_enable_read  : std_logic;
-   -- signal uart_enable_write : std_logic;
-   -- signal uart_data_in      : std_logic_vector(7 downto 0);
-   -- signal uart_data_out     : std_logic_vector(7 downto 0);
-   -- signal uart_busy_write   : std_logic;
-   -- signal uart_data_avail   : std_logic;
+   signal uart_enable_read  : std_logic;
+   signal uart_enable_write : std_logic;
+   signal uart_data_in      : std_logic_vector(7 downto 0);
+   signal uart_data_out     : std_logic_vector(7 downto 0);
+   signal uart_busy_write   : std_logic;
+   signal uart_data_avail   : std_logic;
 
+   -- DISPLAY 
    signal hexint : std_logic_vector(15 downto 0) := x"c1a0";  -- what to display
-   signal reset : std_logic := '1';
+   -- signal reset : std_logic := '1';
+
+   -- I2C FOR SFP
+   signal i2c_word_address    : std_logic_vector(7 downto 0);
+   signal i2c_data_read       : std_logic_vector(7 downto 0);
+   signal i2c_data_write      : std_logic_vector(7 downto 0);
+   signal i2c_op      	       : std_logic_vector(1 downto 0);
+   signal i2c_start_conversion: std_logic;
+   signal i2c_is_running      : std_logic;
+   signal i2c_error_code      : std_logic_vector(2 downto 0);
+
+   -- MDIO FOR SERDES
+   signal mdio_opcode  	      : std_logic_vector(1 downto 0);	-- 00: Address 10: Read-Inc 01: Write
+   signal mdio_data_read       : std_logic_vector(15 downto 0);
+   signal mdio_data_write      : std_logic_vector(15 downto 0);
+   signal mdio_start_conversion: std_logic;
+   signal mdio_running_conversion  : std_logic;
+   signal mdio_error_code          : std_logic_vector(2 downto 0);
+
 begin
 
    -- mdio_scl 	<= serial_clock;
@@ -87,16 +97,16 @@ begin
    --begin
       -- reset <= reset_in;
    --end process;
-   IBUFG_inst : IBUFG
-   generic map (
-      IBUF_DELAY_VALUE => "0", -- Specify the amount of added input delay for buffer, 
-                               -- "0"-"12" (Spartan-3E)
-                               -- "0"-"16" (Spartan-3A)
-      IOSTANDARD => "DEFAULT")
-   port map (
-      O => reset, -- Clock buffer output
-      I => reset_in  -- Clock buffer input (connect directly to top-level port)
-   );
+   -- IBUFG_inst : IBUFG
+   -- generic map (
+   --    IBUF_DELAY_VALUE => "0", -- Specify the amount of added input delay for buffer, 
+   --                             -- "0"-"12" (Spartan-3E)
+   --                             -- "0"-"16" (Spartan-3A)
+   --    IOSTANDARD => "DEFAULT")
+   -- port map (
+   --    O => reset, -- Clock buffer output
+   --    I => reset_in  -- Clock buffer input (connect directly to top-level port)
+   -- );
 
    -- SERDES: MDIO serial master interface
    serdes_io : mdio
@@ -122,12 +132,15 @@ begin
       port map(
  	    reset		=> reset,
  	    double_clock_in 	=> serial_clock,
- 	    word_address 	=> "01010101",
- 	    data 		=> "00110011",
+ 	    word_address 	=> i2c_word_address,
+ 	    data_read 		=> i2c_data_read,
+ 	    data_write 		=> i2c_data_write,
+ 	    op 			=> i2c_op,
  	    serial_clock 	=> mod_def(1),
  	    serial_data 	=> mod_def(2),
- 	    read_write 	=> '0', -- 1: READ, 0: WRITE
- 	    start_conversion 	=> '0'
+ 	    start_conversion 	=> i2c_start_conversion,
+	    is_running		=> i2c_is_running,
+	    error_code 		=> i2c_error_code
  	    );
 
     -- Genero tutti i clock del progetto
@@ -186,6 +199,7 @@ begin
       );
       -- uart_write <= '1';
 
+   test1: if test_bench /= 1 generate
    -- istanzia il display a 7 segmenti
    disp1 : display7seg
       port map (
@@ -195,6 +209,7 @@ begin
          seg   => seg_out,          -- out std_logic_vector(7 downto 0));  -- segment drivers
          hexint=> hexint            -- x"C1A0" -- in std_logic_vector(15 downto 0) ;  -- what to display
       );
+   end generate;
 
 end Behavioral;
 
