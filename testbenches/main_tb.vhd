@@ -98,7 +98,7 @@ ARCHITECTURE behavior OF main_tb IS
    signal i2c_slave_data_write_back : std_logic_vector(7 downto 0);
 
    -- MDIO SLAVE
-   signal mdio_slave_data_write_back : std_logic_vector(15 downto 0);
+   signal mdio_slave_data_write_back : std_logic_vector(15 downto 0) := x"1968";
    signal mdio_slave_data_read_back  : std_logic_vector(15 downto 0);
    signal mdio_slave_error_code : std_logic_vector(2 downto 0);
    signal mdio_slave_opcode : std_logic_vector(1 downto 0);

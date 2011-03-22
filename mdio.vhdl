@@ -36,6 +36,7 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 
 use work.modules.all;
+USE ieee.std_logic_unsigned.ALL;
 
 entity mdio is
    generic (

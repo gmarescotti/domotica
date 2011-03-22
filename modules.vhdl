@@ -55,8 +55,8 @@ package modules is
 	 serial_clock    : in std_logic; -- deve essere < 2.5 MHz!
 	 serial_data     : inout std_logic;
 
-         data_read_back  : out std_logic_vector(15 downto 0);
-	 data_write_back : in std_logic_vector(15 downto 0);
+         data_read_back  : buffer std_logic_vector(15 downto 0); -- out
+	 data_write_back : in std_logic_vector(15 downto 0);  -- in
 
 	 error_code 	 : out std_logic_vector(2 downto 0);
 

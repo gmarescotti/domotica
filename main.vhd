@@ -81,7 +81,7 @@ architecture Behavioral of main is
 
 begin
 
-   -- mdio_scl 	<= serial_clock;
+   mdio_scl 	<= serial_clock;
 
    rate_select 	<= '0';
    t_dis       	<= not tasto(0);
@@ -123,7 +123,8 @@ begin
                 data_write         => mdio_data_write,
                 start_conversion   => mdio_start_conversion,
  	       
-                running_conversion => mdio_running_conversion
+                running_conversion => mdio_running_conversion,
+                error_code         => mdio_error_code
        );
 
    -- SFP: Small form-factor pluggable transceiver 

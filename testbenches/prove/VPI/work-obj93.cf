@@ -1,7 +1,0 @@
-v 3
-file . "disptree.vhdl" "20101125171109.000" "20101125225422.814":
-  entity disptree at 1( 0) + 0 on 16;
-  entity sub_dp at 5( 56) + 0 on 17;
-  architecture sub_behav of sub_dp at 10( 136) + 0 on 18;
-  configuration sub_conf at 15( 213) + 0 on 19;
-  architecture behav of disptree at 20( 291) + 0 on 20;

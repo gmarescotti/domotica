@@ -49,7 +49,7 @@ entity uart_menu is
       mdio_opcode  	 	: out std_logic_vector(1 downto 0);	-- 00: Address 10: Read-Inc 01: Write
       mdio_data_read       	: in std_logic_vector(15 downto 0);
       mdio_data_write      	: out std_logic_vector(15 downto 0);
-      mdio_start_conversion	: buffer std_logic;
+      mdio_start_conversion	: buffer std_logic := '0';
       mdio_running_conversion   : in std_logic;
       mdio_error_code           : in std_logic_vector(2 downto 0);
 
@@ -213,41 +213,51 @@ begin
  	       end case;
  
             -------------------- GESTIONE MDIO ------------------------
+            -- OPERAZIONI MDIO: READ INC/ADDRESS/WRITE DATA
             when x"62" => -- 'b'
  	       mdio_case: case data_rxed(1) is
 
-                  when x"61" => -- invio dato in MDIO
+                  when x"61" => -- 'a' START WRITE ADDRESS TO MDIO
 
+                     mdio_opcode <= "00"; -- ADDRESS
                      mdio_data_write <= data_rxed(2) & data_rxed(3);
-                     mdio_opcode <= data_rxed(1) (1 downto 0);
- 	             assert data_rxed(1)(7 downto 2) = "000000" report "mdio-opcode diverso da 00 01 10 11";
+                     mdio_start_conversion <= not mdio_start_conversion; -- START!
+                     counter_loc := 0;
+
+                  when x"62" => -- 'b' START WRITE DATA TO MDIO
+
+                     mdio_opcode <= "01"; -- DATA
+                     mdio_data_write <= data_rxed(2) & data_rxed(3);
                      mdio_start_conversion <= not mdio_start_conversion; -- START!
                      counter_loc := 0;
  
-                  when x"62" => -- lettura dato da MDIO
+                  when x"63" => -- 'c' START READ (AND INCREMENT ADDRESS) FROM MDIO
+                     mdio_opcode <= "10"; -- READ INC
+                     mdio_start_conversion <= not mdio_start_conversion; -- START!
                      counter_loc := 0;
-                     -- data_tobe_txed(1) <= mdio_data_read(15 downto 8);
-                     -- data_tobe_txed(0) <= mdio_data_read(7 downto 0);
-                     -- counter_loc := 2;
-                  -- when x"66" => -- lettura error_code
-                     -- data_tobetxed(0) <= mdio_error_code;
+
+                  when x"64" => -- 'd' READ RESULT FROM MDIO
+                     data_tobe_txed(1) <= mdio_data_read(15 downto 8);
+                     data_tobe_txed(0) <= mdio_data_read(7 downto 0);
+                     counter_loc := 2;
+
+                  when x"65" => -- 'e' READ ERROR_CODE FROM MDIO
+                     data_tobe_txed(0) <= "00000" & mdio_error_code;
+                     counter_loc := 1;
 
 		  when others =>
-		     --
-		     counter_loc := 0;
+                     data_tobe_txed(0) <= x"EE";
+		     counter_loc := 1;
+
                end case;
 
             -------------------- GESTIONE I2C ------------------------
+            -- OPERAZIONI I2C: BYTE WRITE/RANDOM READ/CURRENT ADDRESS/READ
             when x"63" => -- 'c'
  	       case data_rxed(1) is
-                  when x"61" => 	-- invio dato in MDIO
+                  when x"61" => 	-- BYTE WRITE
 
                      counter_loc := 0;
- 
-                     -- mdio_data_write <= data_rxed(2) & data_rxed(3);
-                     -- mdio_opcode <= data_rxed(1) (1 downto 0);
- 	             -- assert data_rxed(1)(7 downto 2) = "000000" report "mdio-opcode diverso da 00 01 10 11";
-                     -- mdio_start_conversion_loc <= not mdio_start_conversion_loc; -- START!
  
                   when x"62" => -- lettura dato da MDIO
                      counter_loc := 0;
@@ -340,6 +350,9 @@ begin
    
       elsif rising_edge(combi2) then
 	 -- mylog("COMBI!", std_logic_vector(to_unsigned(counter_tx, 8)));
+	 -- mylog("COMBI!", data_tobe_txed(counter));
+-- assert false report integer'image(conv_integer(data_tobe_txed(counter))) severity note;
+
 
          NNN := NNN + 1;
          hexint(15 downto 8) <= std_logic_vector(to_unsigned(NNN, 8));

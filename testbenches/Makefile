@@ -57,6 +57,6 @@ $(TARGETS):
 
 clean:
 	@$(RM) *.o ../*~ *~ $(TARGETS) tmp/* *.vcd log.txt
-	@$(RM) -rf tmp tcl-serial/log.txt tcl-serial/*~
+	@$(RM) -rf tmp log.txt
 	@ghdl --clean
 

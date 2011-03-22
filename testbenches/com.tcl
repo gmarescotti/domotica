@@ -25,8 +25,10 @@
 #     5,4,3,2,1,0: Echo dei dati tx
 
 set list_special_characters {0 1 10 13} ;# EOF SPECIALCHAR LF CR
+
 #######################################################
-proc invia { { verbose true } args } {
+proc invia { args } {
+   global verbose
    global tb
    global list_special_characters
 
@@ -49,7 +51,9 @@ proc invia { { verbose true } args } {
    # flush $tb
 }
 
-proc ricevi { command_check { verbose true } { onenumber false } } {
+#######################################################
+proc ricevi { command_check { onenumber false } } {
+   global verbose
    global tb
    set ret ""
 
@@ -90,7 +94,7 @@ proc ricevi { command_check { verbose true } { onenumber false } } {
       if $onenumber {
          append ret [ format %.2x $num ]
       } else {
-         lappend ret [ format %x $num ]
+         lappend ret 0x[ format %.2x $num ]
       }
    }
    if $verbose { puts "FINE RICEZIONE" }
@@ -103,10 +107,6 @@ proc ricevi { command_check { verbose true } { onenumber false } } {
 }
 
 #######################################################
-proc mdio_send { opcode data4 } {
-   invia false 0x01 $opcode "$data4>>8" "$data4&0xFF"
-}
-
 proc init { args } {
    global tb argc argv
    if { [ lsearch "$argv" "-tty" ] >= 0 } {
@@ -115,7 +115,7 @@ proc init { args } {
       fconfigure $tb -mode 57600,n,8,1 -handshake none -translation binary -buffering none -blocking 1
       puts "OPENED ttyUSB0: $tb!"
    } else {
-      set tb [ open "| ../main_tb 2>log.txt" r+ ]
+      set tb [ open "| ./main_tb 2>log.txt" r+ ]
       # set tb [ open "| ./prova.sh" r+ ]
       fconfigure $tb -translation binary -buffering line ;#  line none all
    }
@@ -164,52 +164,106 @@ proc polling {} {
    # puts "POLL.."
 }
 #######################################################
-proc test_clocks { verbose } {
+proc test_clocks { } {
    puts "TESTING CLOCKS...."
 
-   invia $verbose 0x61 0x61	0x31;# START CLOCK SUM
-   ricevi 0x61 $verbose
+   invia 0x61 0x61	0x31;# START CLOCK SUM
+   ricevi 0x61
 
    after 10 ;# msec
-   invia $verbose 0x61 0x61	0x30;# STOP CLOCK SUM
-   ricevi 0x61 $verbose
+   invia 0x61 0x61	0x30;# STOP CLOCK SUM
+   ricevi 0x61
   
    # PERDO UN PO' DI TEMPO PER IL SIMULATORE BLOCCATO SULLA GETLINE
    # PIUTTOSTO CHE SUL CALCOLO DEI CLOCKS... 
-   # invia $verbose 0x78 0x61 0x62 0x63 0x64
-   # ricevi 0x78 $verbose
+   # invia 0x78 0x61 0x62 0x63 0x64
+   # ricevi 0x78
 
-   invia $verbose 0x61 0x63 ;# CLKCLOCK
-   puts "CLKCLOCK= [ ricevi 0x61 $verbose true ]"
+   invia 0x61 0x63 ;# CLKCLOCK
+   puts "CLKCLOCK= [ ricevi 0x61 true ]"
 
-   invia $verbose 0x61 0x62 ;# REFCLOCK
+   invia 0x61 0x62 ;# REFCLOCK
    # after 2000
-   puts "REFCLOCK= [ ricevi 0x61 $verbose true ]"
+   puts "REFCLOCK= [ ricevi 0x61 true ]"
 
-   invia $verbose 0x61 0x64 ;# SERIALCLOCK
+   invia 0x61 0x64 ;# SERIALCLOCK
    # after 2000
-   puts "SERIALCLOCK= [ ricevi 0x61 $verbose true ]"
+   puts "SERIALCLOCK= [ ricevi 0x61 true ]"
 }
 
 #######################################################
-proc test_codes { verbose } {
+proc test_codes { } {
    global list_special_characters
-   puts "TESTING CODES $list_special_characters USING ECHO"
-   # invia $verbose ascii("x") 0x61 0x62 0x63 0x64 0x65
-   eval invia $verbose [ ascii "x" ] $list_special_characters 0x33
-   set ret [ ricevi 0x78 $verbose ]
+   puts "TESTING CODES $list_special_characters USING ECHO..."
+   # invia ascii("x") 0x61 0x62 0x63 0x64 0x65
+   eval invia [ ascii "x" ] $list_special_characters 0x33
+   set ret [ ricevi 0x78 ]
    puts "RET: $ret"
 }
 
 #######################################################
+proc mdio { op args } {
+   # invia false [ ascii "c" ] $opcode "$data4>>8" "$data4&0xFF"
+   # invia false 0x62 0x61 :# invio dato in MDIO
+   switch -exact -- $op {
+      "write_address" {
+         eval invia 0x62 0x61 $args
+      }
+      "write_data" {
+         eval invia 0x62 0x62 $args
+      }
+      "read" {
+         eval invia 0x62 0x63
+      }
+      default {
+         puts "ERROR: WRONG op: $op"
+	 return
+      }
+   }
+   ricevi 0x62 ;# ACKNOWLEDGE INVIO
 
-# mdio_send 0 0x1234 ;# Set mdio address 1234
+   # ASPETTA CONVERSION DONE
+   after 1000
+
+   # LEGGI ERROR_CODE
+   eval invia 0x62 0x65
+   set err [ ricevi 0x62 ]
+
+   if { $err != 0 } {
+      puts "ERROR_CODE: $err"
+   }
+
+   if { $op == "read" } {
+      # LEGGI DATO
+      eval invia 0x62 0x64
+      after 1000
+      return [ ricevi 0x62 true ] ;# TRUE
+   }
+}
+
+#######################################################
+proc test_mdio {} {
+   puts "TEST MDIO..."
+   puts "VALUE READ (SB: 0x1968): [format %x [ mdio read ] ]"
+   mdio write_address 0x12 0x45
+   after 1000
+   puts "VALUE READ (SB: 0x1245): [format %x [ mdio read ] ]"
+   mdio write_data 0x33 0x44
+   puts "VALUE READ (SB: 0x3344): [format %x [ mdio read ] ]"
+}
+
+#######################################################
+set verbose false
 
 init
 
-# test_clocks false
+#######################################################
 
-test_codes true
+test_mdio
+
+# test_clocks
+
+# test_codes
 
 #######################################################
 puts "END OF FILE"
