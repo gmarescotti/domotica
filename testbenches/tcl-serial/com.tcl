@@ -24,7 +24,7 @@
 #   RX:
 #     5,4,3,2,1,0: Echo dei dati tx
 
-set list_special_characters { 0 1 10 13 } ;# EOF SPECIALCHAR LF CR
+set list_special_characters {0 1 10 13} ;# EOF SPECIALCHAR LF CR
 #######################################################
 proc invia { { verbose true } args } {
    global tb
@@ -36,6 +36,7 @@ proc invia { { verbose true } args } {
 
       if { [ lsearch -integer $list_special_characters $num ] != -1 } {
 	 puts -nonewline $tb "\x01"
+         if $verbose { puts "STO INVIANDO CODE 01" }
 	 set num [ expr ~$num & 0xFF ]
       }
 
@@ -114,12 +115,21 @@ proc init { args } {
       fconfigure $tb -mode 57600,n,8,1 -handshake none -translation binary -buffering none -blocking 1
       puts "OPENED ttyUSB0: $tb!"
    } else {
-      set tb [ open "| ../main_tb 2>cicci.txt" r+ ]
+      set tb [ open "| ../main_tb 2>log.txt" r+ ]
       # set tb [ open "| ./prova.sh" r+ ]
       fconfigure $tb -translation binary -buffering line ;#  line none all
    }
    after 300
    # flush $tb
+}
+
+#######################################################
+proc ascii { args } {
+   set ret ""
+   foreach ch $args {
+      lappend ret [ scan $ch %c ]
+   }
+   return $ret
 }
 
 #######################################################
@@ -154,31 +164,41 @@ proc polling {} {
    # puts "POLL.."
 }
 #######################################################
-proc test_clocks {} {
+proc test_clocks { verbose } {
    puts "TESTING CLOCKS...."
 
-   invia true 0x61 0x61	0x31;# START CLOCK SUM
-   ricevi 0x61 true
+   invia $verbose 0x61 0x61	0x31;# START CLOCK SUM
+   ricevi 0x61 $verbose
 
    after 10 ;# msec
-   invia true 0x61 0x61	0x30;# STOP CLOCK SUM
-   ricevi 0x61 true
+   invia $verbose 0x61 0x61	0x30;# STOP CLOCK SUM
+   ricevi 0x61 $verbose
   
    # PERDO UN PO' DI TEMPO PER IL SIMULATORE BLOCCATO SULLA GETLINE
    # PIUTTOSTO CHE SUL CALCOLO DEI CLOCKS... 
-   invia true 0x78 0x61 0x62 0x63 0x64
-   ricevi 0x78 true
+   # invia $verbose 0x78 0x61 0x62 0x63 0x64
+   # ricevi 0x78 $verbose
 
-   invia true 0x61 0x63 ;# CLKCLOCK
-   puts "CLKCLOCK= [ ricevi 0x61 true true ]"
+   invia $verbose 0x61 0x63 ;# CLKCLOCK
+   puts "CLKCLOCK= [ ricevi 0x61 $verbose true ]"
 
-   invia true 0x61 0x62 ;# REFCLOCK
+   invia $verbose 0x61 0x62 ;# REFCLOCK
    # after 2000
-   puts "REFCLOCK= [ ricevi 0x61 true true ]"
+   puts "REFCLOCK= [ ricevi 0x61 $verbose true ]"
 
-   invia true 0x61 0x64 ;# SERIALCLOCK
+   invia $verbose 0x61 0x64 ;# SERIALCLOCK
    # after 2000
-   puts "SERIALCLOCK= [ ricevi 0x61 true true ]"
+   puts "SERIALCLOCK= [ ricevi 0x61 $verbose true ]"
+}
+
+#######################################################
+proc test_codes { verbose } {
+   global list_special_characters
+   puts "TESTING CODES $list_special_characters USING ECHO"
+   # invia $verbose ascii("x") 0x61 0x62 0x63 0x64 0x65
+   eval invia $verbose [ ascii "x" ] $list_special_characters 0x33
+   set ret [ ricevi 0x78 $verbose ]
+   puts "RET: $ret"
 }
 
 #######################################################
@@ -186,16 +206,12 @@ proc test_clocks {} {
 # mdio_send 0 0x1234 ;# Set mdio address 1234
 
 init
-# after 3500
 
-test_clocks
+# test_clocks false
 
-# testa_tty
-#
-# update
-# after 4500
-# update
+test_codes true
 
+#######################################################
 puts "END OF FILE"
 
 if [ catch "close $tb" err ] {
