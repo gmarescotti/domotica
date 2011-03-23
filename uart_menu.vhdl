@@ -57,7 +57,7 @@ entity uart_menu is
       i2c_data_read       : in std_logic_vector(7 downto 0);
       i2c_data_write      : out std_logic_vector(7 downto 0);
       i2c_op      	  : out std_logic_vector(1 downto 0);
-      i2c_start_conversion: buffer std_logic;
+      i2c_start_conversion: buffer std_logic := '0';
       i2c_is_running      : in std_logic;
       i2c_error_code 	  : in std_logic_vector(2 downto 0)
 
@@ -255,18 +255,45 @@ begin
             -- OPERAZIONI I2C: BYTE WRITE/RANDOM READ/CURRENT ADDRESS/READ
             when x"63" => -- 'c'
  	       case data_rxed(1) is
-                  when x"61" => 	-- BYTE WRITE
 
+                  when x"61" => -- 'a' BYTE WRITE
+                     i2c_op <= "00"; -- write mode
+                     i2c_data_write <= data_rxed(2);
+                     i2c_word_address <= data_rxed(3);
+		     i2c_start_conversion <= not i2c_start_conversion;
                      counter_loc := 0;
  
-                  when x"62" => -- lettura dato da MDIO
+                  when x"62" => -- 'b' RANDOM READ
+                     i2c_op <= "01"; -- random read mode
+                     i2c_word_address <= data_rxed(2);
+		     i2c_start_conversion <= not i2c_start_conversion;
                      counter_loc := 0;
-                     -- data_tobe_txed(1) <= mdio_data_read(15 downto 8);
-                     -- data_tobe_txed(0) <= mdio_data_read(7 downto 0);
-                     -- counter_loc := 2;
+
+                  when x"63" => -- 'c' CURRENT ADDRESS READ
+                     i2c_op <= "10"; -- current address read mode
+		     i2c_start_conversion <= not i2c_start_conversion;
+                     counter_loc := 0;
+
+                  ---------------------------------
+                  when x"64" => -- 'c' leggi il codice errore
+                     if i2c_is_running = '1' then
+                        data_tobe_txed(0) <= x"AA";
+                     else
+                        data_tobe_txed(0) <= "00000" & i2c_error_code;
+                     end if;
+                     counter_loc := 1;
+
+                  when x"65" => -- 'd' leggi il valore letto
+                     if i2c_is_running = '1' then
+                        data_tobe_txed(0) <= x"EE";
+                     else
+                        data_tobe_txed(0) <= i2c_data_read;
+                     end if;
+                     counter_loc := 1;
+
 		  when others =>
-		     --
-                     counter_loc := 0;
+		     data_tobe_txed(0) <= x"EF";
+                     counter_loc := 1;
                end case;
 
  	       -- assert false report "clock:" & integer'image(conv_integer(data_tobe_txed(1))) & integer'image(conv_integer(data_tobe_txed(0))) severity note;

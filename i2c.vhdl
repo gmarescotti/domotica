@@ -6,6 +6,8 @@ library IEEE;
 use IEEE.std_logic_1164.all;
 USE ieee.std_logic_unsigned.ALL;
 
+use WORK.modules.all;
+
 entity i2c is
    generic (
       device_address  : std_logic_vector(6 downto 0)
@@ -101,9 +103,9 @@ begin
 	       when verify_ack =>
 		  if serial_data /= '0' then
 		     -- stato := stop;
-		     assert false report "NOT ACKNOWLEDGE!" severity note;
-
 		     error_code <= encode_error(stato_mem);
+
+		     assert false report "NOT ACKNOWLEDGE! with status " & tipo_stato'image(stato_mem) severity note;
 
 		     stato := wait_start;
                      serial_data <= 'Z';

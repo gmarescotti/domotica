@@ -71,7 +71,7 @@ ARCHITECTURE behavior OF main_tb IS
    signal uart_read : std_logic := '0';
 
 	--BiDirs
-   signal mod_def : std_logic_vector(2 downto 0);
+   signal mod_def : std_logic_vector(2 downto 0) := (OTHERS => 'Z');
    signal mdio_sda : std_logic;
    signal mdio_scl : std_logic;
    signal i2c_sda : std_logic;
@@ -92,7 +92,7 @@ ARCHITECTURE behavior OF main_tb IS
    signal clkref_serdes : std_logic;
    
    -- I2C SLAVE
-   signal i2c_slave_dato_chiesto : std_logic_vector(7 downto 0);
+   signal i2c_slave_dato_chiesto : std_logic_vector(7 downto 0) := x"98";
    signal i2c_slave_device_address_back : std_logic_vector(7 downto 0);
    signal i2c_slave_word_address_back : std_logic_vector(7 downto 0);
    signal i2c_slave_data_write_back : std_logic_vector(7 downto 0);
@@ -105,6 +105,9 @@ ARCHITECTURE behavior OF main_tb IS
    signal mdio_slave_addr    : std_logic_vector(4 downto 0);
    signal mdio_slave_devaddr : std_logic_vector(4 downto 0);
 BEGIN
+
+   i2c_scl <= mod_def(1);
+   i2c_sda <= mod_def(2);
 
    -- Instantiate the Unit Under Test (UUT)
    uut: main 

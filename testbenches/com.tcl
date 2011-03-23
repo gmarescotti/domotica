@@ -202,6 +202,44 @@ proc test_codes { } {
 }
 
 #######################################################
+proc i2c { op args } {
+   switch -exact -- $op {
+      "byte_write" {
+         eval invia 0x63 0x61 $args
+      }
+      "random_read" {
+         eval invia 0x63 0x62 $args
+      }
+      "current_address_read" {
+         eval invia 0x63 0x63
+      }
+      default {
+         puts "ERROR: WRONG op: $op"
+	 return
+      }
+   }
+   ricevi 0x63 ;# ACKNOWLEDGE INVIO
+
+   # ASPETTA CONVERSION DONE
+   after 1000
+
+   # LEGGI ERROR_CODE
+   eval invia 0x63 0x64
+   set err [ ricevi 0x63 ]
+
+   if { $err != 0 } {
+      puts "ERROR_CODE: $err"
+   }
+
+   if [ string match "*read" $op ] {
+      # LEGGI DATO
+      eval invia 0x63 0x65
+      after 1000
+      return [ ricevi 0x63 true ] ;# TRUE
+   }
+}
+
+#######################################################
 proc mdio { op args } {
    # invia false [ ascii "c" ] $opcode "$data4>>8" "$data4&0xFF"
    # invia false 0x62 0x61 :# invio dato in MDIO
@@ -244,22 +282,46 @@ proc mdio { op args } {
 #######################################################
 proc test_mdio {} {
    puts "TEST MDIO..."
-   puts "VALUE READ (SB: 0x1968): [format %x [ mdio read ] ]"
+
+   set value [ mdio read ]
+   puts "VALUE READ (SB: 0x1968): [format %x $value ]"
+
    mdio write_address 0x12 0x45
    after 1000
-   puts "VALUE READ (SB: 0x1245): [format %x [ mdio read ] ]"
+
+   set value [ mdio read ]
+   puts "VALUE READ (SB: 0x1245): [format %x $value ]"
+
    mdio write_data 0x33 0x44
-   puts "VALUE READ (SB: 0x3344): [format %x [ mdio read ] ]"
+
+   set value [ mdio read ]
+   puts "VALUE READ (SB: 0x3344): [format %x $value ]"
 }
 
 #######################################################
-set verbose false
+proc test_i2c {} {
+   puts "TEST I2C..."
+
+   set value [ i2c current_address_read ]
+   puts "CURRENT ADDRESS READ (SB:): [format %x $value ]"
+
+   i2c byte_write 0x19 0x81
+   after 1000
+
+   set value [ i2c random_read 0x78 ]
+   puts "RANDOM READ IN 0x78 (SB:): [format %x $value ]"
+}
+
+#######################################################
+set verbose true
 
 init
 
 #######################################################
 
-test_mdio
+# test_mdio
+
+test_i2c
 
 # test_clocks
 

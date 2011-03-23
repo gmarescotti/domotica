@@ -63,6 +63,8 @@ begin
          wait until falling_edge(scl);
       end loop;
 
+mylog("DEVICE_ADDRESS=", device_address_back);
+
       wait until rising_edge(scl);
       -- ABBASSO SDA PER 1 CLOCK PER DARE ACK A MASTER
       sda <= '0';
@@ -83,6 +85,7 @@ begin
          wait for 10 ns;
          sda <= 'Z';
          wait until rising_edge(scl);
+
       else -- WRITE MODE
 
          -------------------------------
