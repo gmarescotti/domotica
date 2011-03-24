@@ -45,6 +45,8 @@ proc invia { args } {
       set coded [ binary format c $num ]
       if $verbose { puts "STO INVIANDO [ format %x $num ]" }
       puts -nonewline $tb $coded
+
+      update
    }
    puts -nonewline $tb "\x0a"
    # puts $tb ""
@@ -98,6 +100,7 @@ proc ricevi { command_check { onenumber false } } {
       }
    }
    if $verbose { puts "FINE RICEZIONE" }
+   update
 
    if $onenumber {
       return [ expr "0x$ret" ]
@@ -116,11 +119,22 @@ proc init { args } {
       puts "OPENED ttyUSB0: $tb!"
    } else {
       set tb [ open "| ./main_tb 2>log.txt" r+ ]
+      ## set tb [ open "| ./main_tb" r+ ]
       # set tb [ open "| ./prova.sh" r+ ]
       fconfigure $tb -translation binary -buffering line ;#  line none all
+
+      ## set f [ open log.txt r ]
+      ## fileevent $f readable "loggami $f"
    }
    after 300
    # flush $tb
+
+}
+
+proc loggami { f args } {
+   puts -nonewline "\033\[31m" ;# ROSSO
+   puts -nonewline "$f[ gets $f ]"
+   puts "\033\[0m" ;# DEFAULT
 }
 
 #######################################################
@@ -224,7 +238,7 @@ proc i2c { op args } {
    after 1000
 
    # LEGGI ERROR_CODE
-   eval invia 0x63 0x64
+   eval invia 0x63 0x65
    set err [ ricevi 0x63 ]
 
    if { $err != 0 } {
@@ -233,7 +247,7 @@ proc i2c { op args } {
 
    if [ string match "*read" $op ] {
       # LEGGI DATO
-      eval invia 0x63 0x65
+      eval invia 0x63 0x64
       after 1000
       return [ ricevi 0x63 true ] ;# TRUE
    }
@@ -261,7 +275,7 @@ proc mdio { op args } {
    ricevi 0x62 ;# ACKNOWLEDGE INVIO
 
    # ASPETTA CONVERSION DONE
-   after 1000
+   ## after 1000
 
    # LEGGI ERROR_CODE
    eval invia 0x62 0x65
@@ -305,33 +319,54 @@ proc test_i2c {} {
    set value [ i2c current_address_read ]
    puts "CURRENT ADDRESS READ (SB:): [format %x $value ]"
 
+   puts "BYTE WRITE 0x19 0x81"
    i2c byte_write 0x19 0x81
    after 1000
+
+   set value [ i2c current_address_read ]
+   puts "CURRENT ADDRESS READ (SB:): [format %x $value ]"
 
    set value [ i2c random_read 0x78 ]
    puts "RANDOM READ IN 0x78 (SB:): [format %x $value ]"
 }
 
 #######################################################
-set verbose true
+set verbose false
 
 init
 
 #######################################################
 
-# test_mdio
+set menu_items {
+   test_mdio
+   test_i2c
+   test_clocks
+   test_codes
+   return
+}
 
-test_i2c
+proc manage_menu {} {
+   global menu_items
 
-# test_clocks
-
-# test_codes
+   while true {
+      set i 0
+      foreach item $menu_items {
+         puts "$i: $item"
+	 incr i
+      }
+      puts -nonewline " >"
+      flush stdout
+      gets stdin x
+      eval [ lindex $menu_items $x ]
+   }
+}
 
 #######################################################
+manage_menu
+
 puts "END OF FILE"
 
 if [ catch "close $tb" err ] {
    puts "ERROR Closing: $err"
 }
-
 

@@ -74,8 +74,8 @@ ARCHITECTURE behavior OF main_tb IS
    signal mod_def : std_logic_vector(2 downto 0) := (OTHERS => 'Z');
    signal mdio_sda : std_logic;
    signal mdio_scl : std_logic;
-   signal i2c_sda : std_logic;
-   signal i2c_scl : std_logic;
+   -- signal i2c_sda : std_logic;
+   -- signal i2c_scl : std_logic;
 
  	--Outputs
    signal rate_select : std_logic;
@@ -106,8 +106,8 @@ ARCHITECTURE behavior OF main_tb IS
    signal mdio_slave_devaddr : std_logic_vector(4 downto 0);
 BEGIN
 
-   i2c_scl <= mod_def(1);
-   i2c_sda <= mod_def(2);
+   -- i2c_scl <= mod_def(1);
+   -- i2c_sda <= mod_def(2);
 
    -- Instantiate the Unit Under Test (UUT)
    uut: main 
@@ -153,8 +153,8 @@ BEGIN
 
    y1 : i2c_slave
    port map(
-      scl 		  => i2c_scl,
-      sda 		  => i2c_sda,
+      scl 		  => mod_def(1), -- i2c_scl,
+      sda 		  => mod_def(2), -- i2c_sda,
       dato_chiesto 	  => i2c_slave_dato_chiesto,
       device_address_back => i2c_slave_device_address_back,
       word_address_back   => i2c_slave_word_address_back,

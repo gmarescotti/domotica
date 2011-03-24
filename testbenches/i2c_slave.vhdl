@@ -15,7 +15,7 @@ entity i2c_slave is
       dato_chiesto : in std_logic_vector(7 downto 0);
 
       device_address_back : buffer std_logic_vector(7 downto 0);
-      word_address_back : out std_logic_vector(7 downto 0);
+      word_address_back : buffer std_logic_vector(7 downto 0); -- era out
       data_write_back : out std_logic_vector(7 downto 0)
    );
 end entity i2c_slave;
@@ -27,7 +27,12 @@ architecture behav of i2c_slave is
    signal toggle_start : std_logic := '0';
    signal toggle_stop : std_logic := '0';
 
+   signal dato_chiesto_loc : std_logic_vector(7 downto 0) := dato_chiesto;
+   -- signal scl_xor_toggle_start : std_logic;
+
 begin
+
+  -- scl_xor_toggle_start <= scl xor sda;
 
    -- START CONDITION
    process(scl,sda)
@@ -60,10 +65,8 @@ begin
       for i in 7 downto 0 loop
          wait until rising_edge(scl);
          device_address_back(i) <= sda;
-         wait until falling_edge(scl);
+         -- wait until falling_edge(scl);
       end loop;
-
-mylog("DEVICE_ADDRESS=", device_address_back);
 
       wait until rising_edge(scl);
       -- ABBASSO SDA PER 1 CLOCK PER DARE ACK A MASTER
@@ -77,7 +80,7 @@ mylog("DEVICE_ADDRESS=", device_address_back);
          for i in 7 downto 0 loop
             wait for 10 ns; -- anticipo di  mezzo clock per preparare un dato valido
                             -- durante il fronte alto di serial clock
-            sda <= dato_chiesto(i);
+            sda <= dato_chiesto_loc(i);
 
             wait until rising_edge(scl);
             wait until falling_edge(scl);
@@ -93,18 +96,24 @@ mylog("DEVICE_ADDRESS=", device_address_back);
          for i in 7 downto 0 loop
             wait until rising_edge(scl);
             word_address_back(i) <= sda;
-            wait until falling_edge(scl);
+            -- wait until falling_edge(scl);
          end loop;
+
          wait until rising_edge(scl);
          -- ABBASSO SDA PER 1 CLOCK PER DARE ACK A MASTER
          sda <= '0';
          wait until falling_edge(scl);
          sda <= 'Z';
 
+         dato_chiesto_loc <= word_address_back; -- USO ADDRESS PER RISPONDERE AL PROSSIMO READ
          -------------------------------
 	 wait until rising_edge(scl);
-         wait on toggle_start for 15 ns; -- aspetto 2/3 clock
-         if toggle_start'event then -- HO RICEVUTO UNA START QUI? VUOL DIRE CHE
+
+         wait on toggle_start for 25 ns; -- aspetto 2/3 clock
+
+         -- wait on scl_xor_toggle_start;
+         if toggle_start'event then
+         -- if toggle_start'event then -- HO RICEVUTO UNA START QUI? VUOL DIRE CHE
 				    -- INIZIA UNA RANDOM READ
             -- assert false report "EVVIVA RANDOM READ" severity note;
 
@@ -127,7 +136,7 @@ mylog("DEVICE_ADDRESS=", device_address_back);
             for i in 7 downto 0 loop
                wait for 10 ns; -- anticipo di  mezzo clock per preparare un dato valido
                                -- durante il fronte alto di serial clock
-               sda <= dato_chiesto(i);
+               sda <= dato_chiesto_loc(i);
 
                wait until rising_edge(scl);
                wait until falling_edge(scl);
@@ -145,6 +154,7 @@ mylog("DEVICE_ADDRESS=", device_address_back);
                wait until falling_edge(scl);
 	       wait until rising_edge(scl);
             end loop;
+
             -- ABBASSO SDA PER 1 CLOCK PER DARE ACK A MASTER
             sda <= '0';
             wait until falling_edge(scl);

@@ -13,7 +13,7 @@ end i2c_tb;
 architecture behav of i2c_tb is
 
    signal clock : std_logic := '0';
-   constant clk_in_period : time := 20 ns; -- 50MHz
+   constant clk_in_period : time := 40 ns; -- 50MHz SHOULD CONSIDER DUMMY_CLOCKS...
 
    signal stop : std_logic := '0';
    signal op : std_logic_vector(1 downto 0);
@@ -138,7 +138,7 @@ begin
       word_address <= x"59";
 
       -- INVIO START_CONVERSION
-      wait for 80 ns;
+      ------- wait for 80 ns;
       start_conversion <= not start_conversion;
       wait until is_running = '0';
 

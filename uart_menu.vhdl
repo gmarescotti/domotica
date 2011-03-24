@@ -236,13 +236,23 @@ begin
                      mdio_start_conversion <= not mdio_start_conversion; -- START!
                      counter_loc := 0;
 
+                  ----------------------------------------------------------
                   when x"64" => -- 'd' READ RESULT FROM MDIO
-                     data_tobe_txed(1) <= mdio_data_read(15 downto 8);
-                     data_tobe_txed(0) <= mdio_data_read(7 downto 0);
+                     if mdio_running_conversion = '1' then
+                        data_tobe_txed(1) <= x"EE";
+                        data_tobe_txed(0) <= x"EE";
+                     else
+                        data_tobe_txed(1) <= mdio_data_read(15 downto 8);
+                        data_tobe_txed(0) <= mdio_data_read(7 downto 0);
+                     end if;
                      counter_loc := 2;
 
                   when x"65" => -- 'e' READ ERROR_CODE FROM MDIO
-                     data_tobe_txed(0) <= "00000" & mdio_error_code;
+                     if mdio_running_conversion = '1' then
+                        data_tobe_txed(0) <= x"EE";
+                     else
+                        data_tobe_txed(0) <= "00000" & mdio_error_code;
+                     end if;
                      counter_loc := 1;
 
 		  when others =>
@@ -258,8 +268,8 @@ begin
 
                   when x"61" => -- 'a' BYTE WRITE
                      i2c_op <= "00"; -- write mode
-                     i2c_data_write <= data_rxed(2);
-                     i2c_word_address <= data_rxed(3);
+                     i2c_word_address <= data_rxed(2);
+                     i2c_data_write <= data_rxed(3);
 		     i2c_start_conversion <= not i2c_start_conversion;
                      counter_loc := 0;
  
@@ -275,19 +285,19 @@ begin
                      counter_loc := 0;
 
                   ---------------------------------
-                  when x"64" => -- 'c' leggi il codice errore
-                     if i2c_is_running = '1' then
-                        data_tobe_txed(0) <= x"AA";
-                     else
-                        data_tobe_txed(0) <= "00000" & i2c_error_code;
-                     end if;
-                     counter_loc := 1;
-
-                  when x"65" => -- 'd' leggi il valore letto
+                  when x"64" => -- 'd' leggi il valore letto
                      if i2c_is_running = '1' then
                         data_tobe_txed(0) <= x"EE";
                      else
                         data_tobe_txed(0) <= i2c_data_read;
+                     end if;
+                     counter_loc := 1;
+
+                  when x"65" => -- 'e' leggi il codice errore
+                     if i2c_is_running = '1' then
+                        data_tobe_txed(0) <= x"AA";
+                     else
+                        data_tobe_txed(0) <= "00000" & i2c_error_code;
                      end if;
                      counter_loc := 1;
 

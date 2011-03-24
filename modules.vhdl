@@ -94,7 +94,7 @@ package modules is
 	 sda : inout std_logic;
          dato_chiesto : in std_logic_vector(7 downto 0);
          device_address_back : buffer std_logic_vector(7 downto 0);
-         word_address_back : out std_logic_vector(7 downto 0);
+         word_address_back : buffer std_logic_vector(7 downto 0); -- era out
          data_write_back : out std_logic_vector(7 downto 0)
       );
    end component;
