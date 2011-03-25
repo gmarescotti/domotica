@@ -1,22 +1,4 @@
 ----------------------------------------------------------------------------------
--- Company: 
--- Engineer: 
--- 
--- Create Date:    21:57:10 11/12/2010 
--- Design Name:    main module
--- Module Name:    main - Behavioral 
--- Project Name:   domus electrica
--- Target Devices: 
--- Tool versions: 
--- Description: 
---
--- Dependencies: 
---
--- Revision: 
--- Revision 0.01 - File Created
--- Additional Comments: 
---
-----------------------------------------------------------------------------------
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use ieee.std_logic_arith.all;
@@ -36,8 +18,7 @@ entity uart_menu is
       reset		: in std_logic;
       clk_in		: in std_logic;
       clkref_serdes, serial_clock : in std_logic;
-      led		: buffer std_logic_vector(7 downto 5) := "000";
-      hexint		: out std_logic_vector(15 downto 0) := x"c2a0";
+      hexint		: inout hexint_digit; -- std_logic_vector(15 downto 0) := (OTHERS => 'Z');
 
       uart_enable_read  : buffer std_logic := '0';
       uart_enable_write : buffer std_logic := '0';
@@ -100,7 +81,6 @@ begin
    -----------------------------------------------------------------------------------------
    -- PROCESS CHARS RECEIVED FROM UART:
    -- COLLECT AND FORWARD MESSAGE TO MANAGEMENT WHEN CR RECEIVED.
-
    uart_tester : process (uart_data_avail, reset) is
       variable flag_aspetta_codice: boolean := false;
       -- variable counter_rx : std_logic_vector (5 downto 0);
@@ -110,11 +90,16 @@ begin
       if reset ='1' then
          counter_rx := 0;
  	 flag_rxed_message <= '0';
+         hexint(0) <= (OTHERS => 'Z');
+         hexint(1) <= (OTHERS => 'Z');
+         hexint(2) <= (OTHERS => 'Z');
+         hexint(3) <= (OTHERS => 'Z');
       else
  
  	 if rising_edge(uart_data_avail) then
  
- 	    -- hexint(15 downto 8) <= uart_data_out;
+ 	    hexint(0) <= uart_data_out(3 downto 0);
+ 	    hexint(1) <= uart_data_out(7 downto 4);
 	    -- mylog("RX: ", uart_data_out);
  
  	    case uart_data_out is
@@ -384,6 +369,10 @@ begin
          uart_enable_write <= '0';
 	 stato_tx <= first;
 	 counter := 0;
+         hexint(0) <= (OTHERS => 'Z');
+         hexint(1) <= (OTHERS => 'Z');
+         hexint(2) <= (OTHERS => 'Z');
+         hexint(3) <= (OTHERS => 'Z');
    
       elsif rising_edge(combi2) then
 	 -- mylog("COMBI!", std_logic_vector(to_unsigned(counter_tx, 8)));
@@ -392,7 +381,7 @@ begin
 
 
          NNN := NNN + 1;
-         hexint(15 downto 8) <= std_logic_vector(to_unsigned(NNN, 8));
+         -- hexint(15 downto 8) <= std_logic_vector(to_unsigned(NNN, 8));
 
  	 case stato_tx is
  
@@ -460,16 +449,16 @@ begin
       end if;    -- reset
    end process;
 
-   with stato_tx select
-      led(7 downto 5) <= 
-		      "000" when first,
-		      "001" when running,
-		      "010" when invio_codice,
-		      "011" when invio_CR,
-		      "100" when fine,
-		      "101" when errore1,
-		      "110" when errore2,
-		      "111" when others;
+--   with stato_tx select
+--      led(7 downto 5) <= 
+--		      "000" when first,
+--		      "001" when running,
+--		      "010" when invio_codice,
+--		      "011" when invio_CR,
+--		      "100" when fine,
+--		      "101" when errore1,
+--		      "110" when errore2,
+--		      "111" when others;
    
     ----------------------------------------------------------------------------
     -- Processo che calcola i clock usati

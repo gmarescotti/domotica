@@ -59,7 +59,7 @@ architecture Behavioral of main is
    signal uart_data_avail   : std_logic;
 
    -- DISPLAY 
-   signal hexint : std_logic_vector(15 downto 0) := x"c1a0";  -- what to display
+   signal hexint : hexint_digit; -- std_logic_vector(15 downto 0) := (OTHERS => 'Z');
    -- signal reset : std_logic := '1';
 
    -- I2C FOR SFP
@@ -88,7 +88,7 @@ begin
    led(0) 	<= tasto(0);
    led(1) 	<= los;
    led(2)       <= mod_def(0);
-   led(4 downto 3) <= "00";
+   led(7 downto 3) <= (OTHERS => '0');
 
 --   digit_out 	<= (OTHERS => '1' );
 --   seg_out   	<= (OTHERS => '1' );
@@ -112,19 +112,18 @@ begin
    serdes_io : mdio
       generic map ( mdio_address => "11111", device_address => "11110")
       port map ( 
-                reset		  => reset,
-                -- led		  => led(3 downto 0),
+            reset	       => reset,
  
-                serial_clock       => serial_clock,
-                serial_data        => mdio_sda,
- 	       
-                opcode             => mdio_opcode,
-                data_read          => mdio_data_read,
-                data_write         => mdio_data_write,
-                start_conversion   => mdio_start_conversion,
- 	       
-                running_conversion => mdio_running_conversion,
-                error_code         => mdio_error_code
+            serial_clock       => serial_clock,
+            serial_data        => mdio_sda,
+ 	    
+            opcode             => mdio_opcode,
+            data_read          => mdio_data_read,
+            data_write         => mdio_data_write,
+            start_conversion   => mdio_start_conversion,
+ 	    
+            running_conversion => mdio_running_conversion,
+            error_code         => mdio_error_code
        );
 
    -- SFP: Small form-factor pluggable transceiver 
@@ -160,7 +159,7 @@ begin
       port map(
          reset => reset,
          clk_in => clk_in, clkref_serdes => clkref_serdes, serial_clock => serial_clock, -- CLOCKS
-         led => led(7 downto 5), hexint => hexint,
+         hexint => hexint,
 
          uart_enable_read => uart_enable_read,
          uart_enable_write => uart_enable_write,
@@ -200,7 +199,6 @@ begin
       );
       -- uart_write <= '1';
 
-   test1: if test_bench /= 1 generate
    -- istanzia il display a 7 segmenti
    disp1 : display7seg
       port map (
@@ -210,7 +208,6 @@ begin
          seg   => seg_out,          -- out std_logic_vector(7 downto 0));  -- segment drivers
          hexint=> hexint            -- x"C1A0" -- in std_logic_vector(15 downto 0) ;  -- what to display
       );
-   end generate;
 
 end Behavioral;
 

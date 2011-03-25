@@ -118,7 +118,8 @@ proc init { args } {
       fconfigure $tb -mode 57600,n,8,1 -handshake none -translation binary -buffering none -blocking 1
       puts "OPENED ttyUSB0: $tb!"
    } else {
-      set tb [ open "| ./main_tb 2>log.txt" r+ ]
+      # set tb [ open "| ./main_tb 2>log.txt" r+ ]
+      set tb [ open "| ./main_tb 2> /dev/stderr" r+ ]
       ## set tb [ open "| ./main_tb" r+ ]
       # set tb [ open "| ./prova.sh" r+ ]
       fconfigure $tb -translation binary -buffering line ;#  line none all
@@ -131,11 +132,11 @@ proc init { args } {
 
 }
 
-proc loggami { f args } {
-   puts -nonewline "\033\[31m" ;# ROSSO
-   puts -nonewline "$f[ gets $f ]"
-   puts "\033\[0m" ;# DEFAULT
-}
+# proc loggami { f args } {
+#    puts -nonewline "\033\[31m" ;# ROSSO
+#    puts -nonewline "$f[ gets $f ]"
+#    puts "\033\[0m" ;# DEFAULT
+# }
 
 #######################################################
 proc ascii { args } {

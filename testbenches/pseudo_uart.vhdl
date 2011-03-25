@@ -65,7 +65,7 @@ begin
       cicla_stdin: loop
         exit when endfile(input);
 
--- assert false report "Waiting COMMAND..." severity note;
+ -- assert false report "Waiting COMMAND..." severity note;
 
         readline(input, my_input_line);
 	n:= my_input_line'length;

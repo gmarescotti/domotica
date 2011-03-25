@@ -27,6 +27,8 @@ package modules is
       ram_oe_n    : std_logic;
    end record;
 
+   type hexint_digit is array (3 downto 0) of std_logic_vector(3 downto 0);
+
    component mdio is
       generic (
       	 mdio_address    : std_logic_vector(4 downto 0);
@@ -133,8 +135,7 @@ package modules is
          reset		 : in std_logic;
          clk_in		 : in std_logic;
          clkref_serdes, serial_clock : in std_logic;
-         led		 : buffer std_logic_vector(7 downto 5);
-         hexint		 : out std_logic_vector(15 downto 0);
+         hexint		 : inout hexint_digit; -- std_logic_vector(15 downto 0);
 
          uart_enable_read     : buffer std_logic;
          uart_enable_write    : buffer std_logic;
@@ -193,7 +194,7 @@ package modules is
          reset	      : in std_logic;
          digit        : out std_logic_vector(3 downto 0);  -- digit drivers
          seg          : out std_logic_vector(7 downto 0);  -- segment drivers
-         hexint       : in std_logic_vector(15 downto 0)   -- what to display
+         hexint       : in hexint_digit -- std_logic_vector(15 downto 0)   -- what to display
       );
    end component;
 
@@ -204,6 +205,8 @@ package modules is
 
    -- procedure mylog(name:string; value:std_logic_vector);
    procedure mylog(name:string; value:std_logic_vector := "0"; tipo: boolean := false);
+
+   function to_string(sv: Std_Logic_Vector) return string;
 end;
 
 package body modules is
@@ -237,6 +240,15 @@ package body modules is
       end if;
       writeline(OUTPUT, line_out);
    end procedure mylog;
+
+   function to_string(sv: Std_Logic_Vector) return string is
+      use Std.TextIO.all;
+      variable bv: bit_vector(sv'range) := to_bitvector(sv);
+      variable lp: line;
+   begin
+      write(lp, bv);
+      return lp.all;
+   end;
 
 end modules;
 
