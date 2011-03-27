@@ -233,6 +233,7 @@ proc i2c { op args } {
 	 return
       }
    }
+   after 100
    ricevi 0x63 ;# ACKNOWLEDGE INVIO
 
    # ASPETTA CONVERSION DONE
@@ -318,17 +319,25 @@ proc test_i2c {} {
    puts "TEST I2C..."
 
    set value [ i2c current_address_read ]
-   puts "CURRENT ADDRESS READ (SB:): [format %x $value ]"
+   puts "CURRENT ADDRESS READ (SB:???): [format %x $value ]"
 
-   puts "BYTE WRITE 0x19 0x81"
-   i2c byte_write 0x19 0x81
-   after 1000
+   # puts "BYTE WRITE 0x19 0x81"
+   # i2c byte_write 0x19 0x81
+   # after 1000
 
+   # set value [ i2c current_address_read ]
+   # puts "CURRENT ADDRESS READ (SB:): [format %x $value ]"
+
+   set value [ i2c random_read 0x0 ]
+   puts "RANDOM READ IN 0x0 (SB:): [format %x $value ]"
    set value [ i2c current_address_read ]
-   puts "CURRENT ADDRESS READ (SB:): [format %x $value ]"
-
-   set value [ i2c random_read 0x78 ]
-   puts "RANDOM READ IN 0x78 (SB:): [format %x $value ]"
+   puts "RANDOM READ IN 0x1 (SB:): [format %x $value ]"
+   set value [ i2c current_address_read ]
+   puts "RANDOM READ IN 0x2 (SB:): [format %x $value ]"
+   set value [ i2c current_address_read ]
+   puts "RANDOM READ IN 0x3 (SB:): [format %x $value ]"
+   set value [ i2c current_address_read ]
+   puts "RANDOM READ IN 0x4 (SB:): [format %x $value ]"
 }
 
 #######################################################

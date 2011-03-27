@@ -86,7 +86,8 @@ package modules is
 	 serial_data     : inout std_logic := 'Z';
          start_conversion: in std_logic;
          is_running      : buffer std_logic;
-         error_code 	 : out std_logic_vector(2 downto 0)
+         error_code 	 : out std_logic_vector(2 downto 0);
+         hexint		 : out std_logic_vector(3 downto 0)
 	);
    end component;
 
@@ -135,7 +136,7 @@ package modules is
          reset		 : in std_logic;
          clk_in		 : in std_logic;
          clkref_serdes, serial_clock : in std_logic;
-         hexint		 : inout hexint_digit; -- std_logic_vector(15 downto 0);
+         hexint		 : out std_logic_vector(3 downto 0);
 
          uart_enable_read     : buffer std_logic;
          uart_enable_write    : buffer std_logic;
@@ -194,7 +195,7 @@ package modules is
          reset	      : in std_logic;
          digit        : out std_logic_vector(3 downto 0);  -- digit drivers
          seg          : out std_logic_vector(7 downto 0);  -- segment drivers
-         hexint       : in hexint_digit -- std_logic_vector(15 downto 0)   -- what to display
+         hexint       : in hexint_digit
       );
    end component;
 

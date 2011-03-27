@@ -140,7 +140,8 @@ begin
  	    serial_data 	=> mod_def(2),
  	    start_conversion 	=> i2c_start_conversion,
 	    is_running		=> i2c_is_running,
-	    error_code 		=> i2c_error_code
+	    error_code 		=> i2c_error_code,
+            hexint 		=> hexint(1)
  	    );
 
     -- Genero tutti i clock del progetto
@@ -159,7 +160,7 @@ begin
       port map(
          reset => reset,
          clk_in => clk_in, clkref_serdes => clkref_serdes, serial_clock => serial_clock, -- CLOCKS
-         hexint => hexint,
+         hexint => hexint(0),
 
          uart_enable_read => uart_enable_read,
          uart_enable_write => uart_enable_write,

@@ -28,7 +28,8 @@ entity i2c is
 
       start_conversion : in std_logic;
       is_running       : buffer std_logic;
-      error_code       : out std_logic_vector(2 downto 0) := "000"
+      error_code       : out std_logic_vector(2 downto 0) := "000";
+      hexint	       : out std_logic_vector(3 downto 0) := x"0"
    );
 end entity i2c;
 
@@ -71,6 +72,7 @@ begin
          is_running <= '0';
          serial_data <= 'Z';
          start_conversion_loc <= start_conversion;
+	 hexint <= (OTHERS => '0');
 	 
       elsif rising_edge(double_clock_in) then
 
@@ -104,6 +106,7 @@ begin
 		  if serial_data /= '0' then
 		     -- stato := stop;
 		     error_code <= encode_error(stato_mem);
+		     hexint <= "0" & encode_error(stato_mem);
 
 		     assert false report "NOT ACKNOWLEDGE! with status " & tipo_stato'image(stato_mem) severity note;
 

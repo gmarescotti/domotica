@@ -2,6 +2,8 @@ library IEEE;
 use IEEE.std_logic_1164.all;
 use IEEE.std_logic_unsigned.all;
 
+use WORK.modules.all;
+
 --pragma translate_off
 -- library unisim;
 -- use unisim.vcomponents.all;
@@ -12,7 +14,7 @@ entity display7seg is port (
    reset	: in std_logic;
    digit        : out std_logic_vector(3 downto 0);   -- digit drivers
    seg          : out std_logic_vector(7 downto 0) := (OTHERS => '1');  -- segment drivers
-   hexint       : in std_logic_vector(15 downto 0));  -- what to display
+   hexint       : in hexint_digit);
 end display7seg;
 
 architecture arch_display7seg of display7seg is
@@ -86,10 +88,10 @@ begin
          end if;
 
          case cd is
-            when "00" =>   curr := hexint(3 downto 0);   digit <= "1110";
-            when "01" =>   curr := hexint(7 downto 4);   digit <= "1101";
-            when "10" =>   curr := hexint(11 downto 8);  digit <= "1011";
-            when others => curr := hexint(15 downto 12); digit <= "0111";
+            when "00" =>   curr := hexint(0); digit <= "1110";
+            when "01" =>   curr := hexint(1); digit <= "1101";
+            when "10" =>   curr := hexint(2); digit <= "1011";
+            when others => curr := hexint(3); digit <= "0111";
          end case;
 
          if first = '1' then
