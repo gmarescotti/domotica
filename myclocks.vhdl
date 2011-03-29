@@ -39,7 +39,7 @@ begin
    -- PRIMA ERA:
    -- converte il clock ref del serdes da 30.7MHz a ~1MHz buono per le seriali
    -- 30,7692MHz / 32 = 0.961 MHz
-   process(clkref_serdes_loc, reset) 
+   process(clk_in, reset) 
       variable clk_counter : integer := 0;
       constant CLK_FRACTION : integer := 250; -- 32;
    begin

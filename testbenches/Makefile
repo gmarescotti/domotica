@@ -13,7 +13,7 @@ OPTS=--workdir=tmp --ieee=synopsys -fexplicit
 
 # tutto: $(TARGETS)
 
-# all1: $(WAVES)
+all1: $(WAVES)
 all2: $(TARGETS)
 
 $(TARGETS): tmp

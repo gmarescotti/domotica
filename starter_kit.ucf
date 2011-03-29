@@ -15,25 +15,46 @@ NET "uart_write" LOC = "R13";
 ## SFP CONNECTION
 
 # PIN 04
-NET "rate_select" LOC="E6";
+NET "rate_select" LOC="E6" | IOSTANDARD = "LVTTL";
 # PIN 05
-NET "t_fault" 	  LOC="D5";
+NET "t_fault" 	  LOC="D5" | IOSTANDARD = "LVTTL";
 # PIN 06
-NET "t_dis" 	  LOC="C5";
+NET "t_dis" 	  LOC="C5" | IOSTANDARD = "LVTTL";
 # PIN 07
-NET "los" 	  LOC="D6" | PULLUP;
+NET "los" 	  LOC="D6" | PULLUP | IOSTANDARD = "LVTTL";
 
 # Module Definition 2. Data line for Serial ID.
 # PIN 08
-NET "mod_def<2>"  LOC="C6" | PULLUP;
+NET "mod_def<2>"  LOC="C6" | PULLUP | IOSTANDARD = "LVTTL";
 
 # Module Definition 1. Clock line for Serial ID.
 # PIN 09
-NET "mod_def<1>"  LOC="E7" | PULLUP;
+NET "mod_def<1>"  LOC="E7" | PULLUP | IOSTANDARD = "LVTTL";
 
 # Module Definition 0. Grounded within the module.
 # PIN 10
-NET "mod_def<0>"  LOC="C7" | PULLUP;
+NET "mod_def<0>"  LOC="C7" | PULLUP | IOSTANDARD = "LVTTL";
+
+##########################################################
+## A2 EXPANSION CONNECTOR
+## SERDES CONNECTION
+
+# CLOCK REF 30.7 MHz per SERDES
+
+# Sets the attributes to an output differential pin pair
+# NET <p_side_output_port_name> LOC=<pin_location> | IOSTANDARD=<io_standard_name>;
+# NET <n_side_output_port_name> LOC=<pin_location> | IOSTANDARD=<io_standard_name>;
+# -- | IOSTANDARD = "LVDS";
+# NET "clkref_serdes_p" LOC = "A4" | IOSTANDARD = "LVDS_25"; # "LVDSEXT_25";
+# NET "clkref_serdes_n" LOC = "B4" | IOSTANDARD = "LVDS_25"; # "LVDSEXT_25";
+NET "clkref_serdes_p" LOC = "B13" | IOSTANDARD = "LVDS_25"; # "LVDSEXT_25";
+NET "clkref_serdes_n" LOC = "A13" | IOSTANDARD = "LVDS_25"; # "LVDSEXT_25";
+
+####  CLOCK E DATO SERIALI
+## MDIO and MDC pins are 3.3V LVTTL compliant
+## The MDIO pin requires a pull-up resistor 
+NET "mdio_sda" LOC="D7" | PULLUP | IOSTANDARD = "LVTTL";
+NET "mdio_scl" LOC="C8" | PULLUP | IOSTANDARD = "LVTTL";
 
 ##########################################################
 ## LED
@@ -56,32 +77,6 @@ NET "tasto<4>" LOC = "J14";
 NET "tasto<5>" LOC = "J13";
 NET "tasto<6>" LOC = "K14";
 NET "tasto<7>" LOC = "K13";
-
-##########################################################
-## A2 EXPANSION CONNECTOR
-## SERDES CONNECTION
-
-# CLOCK REF 30.7 MHz per SERDES
-
-# Sets the attributes to an output differential pin pair
-# NET <p_side_output_port_name> LOC=<pin_location> | IOSTANDARD=<io_standard_name>;
-# NET <n_side_output_port_name> LOC=<pin_location> | IOSTANDARD=<io_standard_name>;
-# -- | IOSTANDARD = "LVDS";
-## NET "clkref_serdes_p" LOC = "A4" | IOSTANDARD = "LVDSEXT_25";
-## NET "clkref_serdes_n" LOC = "B4" | IOSTANDARD = "LVDSEXT_25";
-
-## SOLO PER TEST!!!!
-# NET "clkref_serdes_back_p" CLOCK_DEDICATED_ROUTE = FALSE;
-# #NET "clkref_serdes_back_p" LOC = "E11" | IOSTANDARD = "LVDSEXT_25";
-# #NET "clkref_serdes_back_n" LOC = "D11" | IOSTANDARD = "LVDSEXT_25";
-# NET "clkref_serdes_back_p" LOC = "C8" | IOSTANDARD = "LVDSEXT_25";
-# NET "clkref_serdes_back_n" LOC = "D8" | IOSTANDARD = "LVDSEXT_25";
-
-####  CLOCK E DATO SERIALI
-## MDIO and MDC pins are 3.3V LVTTL compliant
-## The MDIO pin requires a pull-up resistor 
-NET "mdio_sda" LOC="D15" | PULLUP | IOSTANDARD = "LVTTL";
-NET "mdio_scl" LOC="D16" | PULLUP | IOSTANDARD = "LVTTL";
 
 ########################################################## 
 # 4 x 7 segment display:

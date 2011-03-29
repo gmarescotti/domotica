@@ -185,7 +185,8 @@ begin
 		     if serial_data = '0' then
 			stato <= DataRead;
 		     else
-			stato <= WaitStart; -- ERRORE!
+			-- !!!!! stato <= WaitStart; -- ERRORE!
+			stato <= DataRead;
 			error_code <= "001";
 
 		     end if;

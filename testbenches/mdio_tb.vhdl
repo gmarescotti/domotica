@@ -102,8 +102,8 @@ begin
 
       mylog("data_write_back=", data_write_back);
       mylog("data_read=", data_read);
-      mylog2("error=", error_code);
-      mylog2("errorslave=", error_code_slave);
+      mylog("error=", error_code);
+      mylog("errorslave=", error_code_slave);
 
       ------------------------------------------------------------
       opcode <= "00"; -- ADDRESS
@@ -113,8 +113,8 @@ begin
 
       mylog("data_write=", data_write);
       mylog("data_read_back=", data_read_back);
-      mylog2("error=", error_code);
-      mylog2("errorslave=", error_code_slave);
+      mylog("error=", error_code);
+      mylog("errorslave=", error_code_slave);
 
       ------------------------------------------------------------
       opcode <= "01"; -- WRITE DATA
@@ -124,8 +124,8 @@ begin
 
       mylog("data_write=", data_write);
       mylog("data_read_back=", data_read_back);
-      mylog2("error=", error_code);
-      mylog2("errorslave=", error_code_slave);
+      mylog("error=", error_code);
+      mylog("errorslave=", error_code_slave);
 
       --------------------------------------------------------------
       stop <= '1';

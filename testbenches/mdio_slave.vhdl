@@ -29,7 +29,7 @@ architecture Behavioral of mdio_slave is
    type tipo_stato is ( aspetta_preamble, aspetta_zero, aspetta_start, aspetta_code, addresses, turn_around_read, turn_around_write, scrivi_dato_back, leggi_dato );
    signal alladdresses : std_logic_vector(9 downto 0);
 
-   signal data_write_back_loc : std_logic_vector(15 downto 0);
+   signal data_write_back_loc : std_logic_vector(15 downto 0) := x"7777";
 begin
 
    addr <= alladdresses(4 downto 0);

@@ -244,7 +244,7 @@ proc i2c { op args } {
    set err [ ricevi 0x63 ]
 
    if { $err != 0 } {
-      puts "ERROR_CODE: $err"
+      puts "\033\[31m######ERROR_CODE: $err#######\033\[0m"
    }
 
    if [ string match "*read" $op ] {
@@ -274,20 +274,22 @@ proc mdio { op args } {
 	 return
       }
    }
+   after 100
    ricevi 0x62 ;# ACKNOWLEDGE INVIO
 
    # ASPETTA CONVERSION DONE
-   ## after 1000
+   after 1000
 
    # LEGGI ERROR_CODE
    eval invia 0x62 0x65
    set err [ ricevi 0x62 ]
 
    if { $err != 0 } {
-      puts "ERROR_CODE: $err"
+      puts "\033\[31m######ERROR_CODE: $err#######\033\[0m"
    }
 
    if { $op == "read" } {
+      after 100
       # LEGGI DATO
       eval invia 0x62 0x64
       after 1000
@@ -299,19 +301,26 @@ proc mdio { op args } {
 proc test_mdio {} {
    puts "TEST MDIO..."
 
-   set value [ mdio read ]
-   puts "VALUE READ (SB: 0x1968): [format %x $value ]"
+   ## set value [ mdio read ]
+   ## puts "VALUE READ (SB: 0x1968): [format %x $value ]"
 
-   mdio write_address 0x12 0x45
-   after 1000
+   ## mdio write_address 0x12 0x45
+   ## after 1000
 
-   set value [ mdio read ]
-   puts "VALUE READ (SB: 0x1245): [format %x $value ]"
+   ## set value [ mdio read ]
+   ## puts "VALUE READ (SB: 0x1245): [format %x $value ]"
 
-   mdio write_data 0x33 0x44
+   ## mdio write_data 0x33 0x44
 
-   set value [ mdio read ]
-   puts "VALUE READ (SB: 0x3344): [format %x $value ]"
+   ## set value [ mdio read ]
+   ## puts "VALUE READ (SB: 0x3344): [format %x $value ]"
+
+   puts "Address: 02h 0Eh Value: 2000h: National Semiconductor identifier assigned by the IEEE."
+   # mdio write_address 0x00 0x03
+   # puts "Value(0x0003): [ format %x [ mdio read ] ]"
+
+   ### mdio write_address 0x00 0x02
+   puts "Value(0x0002): [ format %x [ mdio read ] ]"
 }
 
 #######################################################
@@ -342,6 +351,7 @@ proc test_i2c {} {
 
 #######################################################
 set verbose false
+# set verbose true
 
 init
 
