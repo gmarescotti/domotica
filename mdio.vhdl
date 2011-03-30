@@ -60,7 +60,8 @@ entity mdio is
 	start_conversion : in std_logic;
 
 	running_conversion  : out std_logic;
-	error_code          : out std_logic_vector(2 downto 0)
+	error_code          : out std_logic_vector(2 downto 0);
+	hexint 		    : out std_logic_vector(3 downto 0)
    );
 end entity mdio;
 
@@ -97,6 +98,7 @@ begin
 	 running_conversion <= '0';
 	 error_code <= "000";
 	 serial_data <= 'Z';
+	 hexint <= x"0";
       else 
 
 	 if falling_edge(serial_clock) then
@@ -105,6 +107,10 @@ begin
 
 	       when WaitStart =>
 		  serial_data <= 'Z';
+
+		  if serial_data = '0' then
+		     hexint <= x"1";
+		  end if;
 
 		  if start_conversion /= start_conversion_loc then
 		     start_conversion_loc <= start_conversion;
@@ -117,7 +123,11 @@ begin
 		  end if;
 
 	       when Preamble =>
-		  serial_data <= '1';
+		  -- serial_data <= '1';
+
+		  if serial_data = '0' then
+		     hexint <= x"2";
+		  end if;
 
 		  if bit_counter > 0 then
 		     bit_counter := bit_counter - 1;
@@ -188,6 +198,7 @@ begin
 			-- !!!!! stato <= WaitStart; -- ERRORE!
 			stato <= DataRead;
 			error_code <= "001";
+		        hexint <= x"4";
 
 		     end if;
 		  end if;
@@ -203,6 +214,7 @@ begin
 	       when others =>
 		  stato <= WaitStart;
 		  error_code <= "111";
+		  hexint <= x"3";
 
 	    end case;
 	 end if;

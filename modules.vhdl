@@ -47,7 +47,8 @@ package modules is
    	 start_conversion: in std_logic;
 
    	 running_conversion  : out std_logic;
-	 error_code          : out std_logic_vector(2 downto 0)
+	 error_code          : out std_logic_vector(2 downto 0);
+	 hexint	  	     : out std_logic_vector(3 downto 0)
       );
    end component;
 

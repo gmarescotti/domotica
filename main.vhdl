@@ -88,7 +88,9 @@ begin
    led(0) 	<= tasto(0);
    led(1) 	<= los;
    led(2)       <= mod_def(0);
-   led(7 downto 3) <= (OTHERS => '0');
+   led(7 downto 4) <= (OTHERS => '0');
+
+   led(3)       <= mdio_sda;
 
 --   digit_out 	<= (OTHERS => '1' );
 --   seg_out   	<= (OTHERS => '1' );
@@ -123,7 +125,8 @@ begin
             start_conversion   => mdio_start_conversion,
  	    
             running_conversion => mdio_running_conversion,
-            error_code         => mdio_error_code
+            error_code         => mdio_error_code,
+            hexint 	       => hexint(2)
        );
 
    -- SFP: Small form-factor pluggable transceiver 

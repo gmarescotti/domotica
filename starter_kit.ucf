@@ -54,7 +54,7 @@ NET "clkref_serdes_n" LOC = "A13" | IOSTANDARD = "LVDS_25"; # "LVDSEXT_25";
 ## MDIO and MDC pins are 3.3V LVTTL compliant
 ## The MDIO pin requires a pull-up resistor 
 NET "mdio_sda" LOC="D7" | PULLUP | IOSTANDARD = "LVTTL";
-NET "mdio_scl" LOC="C8" | PULLUP | IOSTANDARD = "LVTTL";
+NET "mdio_scl" LOC="C8" | IOSTANDARD = "LVTTL";
 
 ##########################################################
 ## LED
