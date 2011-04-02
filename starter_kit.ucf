@@ -45,16 +45,20 @@ NET "mod_def<0>"  LOC="C7" | PULLUP | IOSTANDARD = "LVTTL";
 # NET <p_side_output_port_name> LOC=<pin_location> | IOSTANDARD=<io_standard_name>;
 # NET <n_side_output_port_name> LOC=<pin_location> | IOSTANDARD=<io_standard_name>;
 # -- | IOSTANDARD = "LVDS";
-# NET "clkref_serdes_p" LOC = "A4" | IOSTANDARD = "LVDS_25"; # "LVDSEXT_25";
-# NET "clkref_serdes_n" LOC = "B4" | IOSTANDARD = "LVDS_25"; # "LVDSEXT_25";
-NET "clkref_serdes_p" LOC = "B13" | IOSTANDARD = "LVDS_25"; # "LVDSEXT_25";
-NET "clkref_serdes_n" LOC = "A13" | IOSTANDARD = "LVDS_25"; # "LVDSEXT_25";
+# OLD NET "clkref_serdes_p" LOC = "A4" | IOSTANDARD = "LVDS_25"; # "LVDSEXT_25";
+# OLD NET "clkref_serdes_n" LOC = "B4" | IOSTANDARD = "LVDS_25"; # "LVDSEXT_25";
+
+# NET "clkref_serdes_p" LOC = "B13" | IOSTANDARD = "LVDS_25"; # "LVDSEXT_25";
+# NET "clkref_serdes_n" LOC = "A13" | IOSTANDARD = "LVDS_25"; # "LVDSEXT_25";
 
 ####  CLOCK E DATO SERIALI
 ## MDIO and MDC pins are 3.3V LVTTL compliant
 ## The MDIO pin requires a pull-up resistor 
 NET "mdio_sda" LOC="D7" | PULLUP | IOSTANDARD = "LVTTL";
 NET "mdio_scl" LOC="C8" | IOSTANDARD = "LVTTL";
+
+NET "mdio_sda_slave" LOC="D8" | PULLUP | IOSTANDARD = "LVTTL";
+NET "mdio_scl_slave" LOC="C9" | IOSTANDARD = "LVTTL";
 
 ##########################################################
 ## LED

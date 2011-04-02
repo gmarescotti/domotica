@@ -316,8 +316,8 @@ proc test_mdio {} {
    ## puts "VALUE READ (SB: 0x3344): [format %x $value ]"
 
    puts "Address: 02h 0Eh Value: 2000h: National Semiconductor identifier assigned by the IEEE."
-   mdio write_address 0x00 0x03
-   after 800
+   # mdio write_address 0x00 0x03
+   # after 800
    # puts "Value(0x0003): [ format %x [ mdio read ] ]"
 
    ### mdio write_address 0x00 0x02

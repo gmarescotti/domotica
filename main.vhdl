@@ -31,6 +31,10 @@ entity main is
 	  -- SERDES MDIO SERIAL
 	  mdio_sda    : inout std_logic := 'Z';
 	  mdio_scl    : out std_logic;
+	  
+	  -- TEST SLAVE
+	  mdio_sda_slave    : inout std_logic := 'Z';
+	  mdio_scl_slave    : in std_logic;
 
 	  -- SERDES CLK_REF
 	  clkref_serdes_p: out std_logic;
@@ -128,6 +132,16 @@ begin
             error_code         => mdio_error_code,
             hexint 	       => hexint(2)
        );
+
+   -- SERDES SLAVE FOR TEST!!!: MDIO serial test slave interface
+   serdes_slave_io : mdio_slave
+      port map ( 
+            reset	       => reset,
+            serial_clock       => mdio_scl_slave,
+            serial_data        => mdio_sda_slave,
+            data_write_back    => x"1492"
+       );
+
 
    -- SFP: Small form-factor pluggable transceiver 
    sfp_io : i2c 
