@@ -266,8 +266,11 @@ proc mdio { op args } {
       "write_data" {
          eval invia 0x62 0x62 $args
       }
-      "read" {
+      "read_inc" {
          eval invia 0x62 0x63
+      }
+      "read" {
+         eval invia 0x62 0x64
       }
       default {
          puts "ERROR: WRONG op: $op"
@@ -281,17 +284,17 @@ proc mdio { op args } {
    after 1000
 
    # LEGGI ERROR_CODE
-   eval invia 0x62 0x65
+   eval invia 0x62 0x71
    set err [ ricevi 0x62 ]
 
    if { $err != 0 } {
       puts "\033\[31m######ERROR_CODE: $err#######\033\[0m"
    }
 
-   if { $op == "read" } {
+   if [ string match "read*" $op ] {
       after 100
       # LEGGI DATO
-      eval invia 0x62 0x64
+      eval invia 0x62 0x70
       after 1000
       return [ ricevi 0x62 true ] ;# TRUE
    }
@@ -316,12 +319,14 @@ proc test_mdio {} {
    ## puts "VALUE READ (SB: 0x3344): [format %x $value ]"
 
    puts "Address: 02h 0Eh Value: 2000h: National Semiconductor identifier assigned by the IEEE."
-   # mdio write_address 0x00 0x03
-   # after 800
+   ## mdio write_address 0x00 0x03
+   ## after 800
    # puts "Value(0x0003): [ format %x [ mdio read ] ]"
 
    ### mdio write_address 0x00 0x02
-   puts "Value(0x0002): [ format %x [ mdio read ] ]"
+   ## puts "Read(0x0002): [ format %x [ mdio read ] ]"
+   ## after 200
+   puts "Read-Inc(0x0002): [ format %x [ mdio read_inc ] ]"
 }
 
 #######################################################

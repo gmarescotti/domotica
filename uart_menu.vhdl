@@ -226,13 +226,18 @@ begin
                         mdio_start_conversion <= not mdio_start_conversion; -- START!
                         counter_loc := 0;
 
+                     when x"64" => -- 'd' START READ FROM MDIO
+                        mdio_opcode <= "11"; -- READ
+                        mdio_start_conversion <= not mdio_start_conversion; -- START!
+                        counter_loc := 0;
+
                      ----------------------------------------------------------
-                     when x"64" => -- 'd' READ RESULT FROM MDIO
+                     when x"70" => -- 'd' READ RESULT FROM MDIO
 			data_tobe_txed(1) <= mdio_data_read(15 downto 8);
 			data_tobe_txed(0) <= mdio_data_read(7 downto 0);
                         counter_loc := 2;
 
-                     when x"65" => -- 'e' READ ERROR_CODE FROM MDIO
+                     when x"71" => -- 'e' READ ERROR_CODE FROM MDIO
 			data_tobe_txed(0) <= "00000" & mdio_error_code;
                         counter_loc := 1;
 

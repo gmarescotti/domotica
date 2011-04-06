@@ -35,13 +35,14 @@ begin
 
    clkref_serdes <= clkref_serdes_loc;
    
+   -- CAMBIO ANCORE: VOGLIO 20KHz. Quindi 50MHz/2500.
    -- CAMBIO: VOGLIO 200KHz. Quindi 50MHz/250.
    -- PRIMA ERA:
    -- converte il clock ref del serdes da 30.7MHz a ~1MHz buono per le seriali
    -- 30,7692MHz / 32 = 0.961 MHz
    process(clk_in, reset) 
       variable clk_counter : integer := 0;
-      constant CLK_FRACTION : integer := 250; -- 32;
+      constant CLK_FRACTION : integer := 2500; -- 32;
    begin
       if reset = '1' then
          clk_counter := 0;

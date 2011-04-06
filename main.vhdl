@@ -85,7 +85,7 @@ architecture Behavioral of main is
 
 begin
 
-   mdio_scl 	<= serial_clock;
+   -- mdio_scl 	<= serial_clock;
 
    rate_select 	<= '0';
    t_dis       	<= not tasto(0);
@@ -95,6 +95,33 @@ begin
    led(7 downto 4) <= (OTHERS => '0');
 
    led(3)       <= mdio_sda;
+
+--   -- ritardo il fronte di discesa di mdio_scl con monostabile
+--   clock_pro: process(clk_in) is
+--      variable cnt : integer := 0;
+--   begin
+--      if rising_edge(clk_in) then
+--         if reset = '1' then
+--            cnt := 0;
+--            mdio_scl <= '0';
+--         else
+--            if serial_clock = '0' then
+--               mdio_scl <= '0';
+--               cnt := 0;
+--	    else
+--               if cnt < 80 then
+--                  cnt := cnt + 1;
+--                  mdio_scl <= '0';
+--               else
+--                  mdio_scl <= '1';
+--               end if;
+--            end if;
+--         end if;
+--
+--      end if;
+--   end process;
+--
+--
 
 --   digit_out 	<= (OTHERS => '1' );
 --   seg_out   	<= (OTHERS => '1' );
@@ -120,7 +147,9 @@ begin
       port map ( 
             reset	       => reset,
  
-            serial_clock       => serial_clock,
+            clk_in             => serial_clock,
+
+            serial_clock       => mdio_scl,
             serial_data        => mdio_sda,
  	    
             opcode             => mdio_opcode,

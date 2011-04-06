@@ -38,7 +38,9 @@ package modules is
          reset		 : in std_logic;
          -- led		 : buffer std_logic_vector(3 downto 0);
 
-   	 serial_clock    : in std_logic; -- deve essere < 2.5 MHz!
+ 	 clk_in 	 : in std_logic; -- deve essere < 2.5 MHz!
+
+   	 serial_clock    : buffer std_logic; -- deve essere < 2.5 MHz!
    	 serial_data     : inout std_logic;
    
    	 opcode  	 : in std_logic_vector(1 downto 0);	-- 00: Address 10: Read-Inc 01: Write

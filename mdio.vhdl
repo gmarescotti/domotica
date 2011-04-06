@@ -47,11 +47,14 @@ entity mdio is
         reset		: in std_logic;
         -- led		: buffer std_logic_vector(3 downto 0) := (OTHERS => '0');
 
-	serial_clock    : in std_logic; -- deve essere < 2.5 MHz!
+	clk_in 		: in std_logic; -- deve essere < 2.5 MHz!
+
+	serial_clock    : buffer std_logic; -- deve essere < 2.5 MHz!
 	serial_data     : inout std_logic;
 
 	-- 00: Address
         -- 10: Read-Inc
+	-- 11: Read
         -- 01: Write
 	opcode  	: in std_logic_vector(1 downto 0);
 
@@ -67,11 +70,13 @@ end entity mdio;
 
 architecture rtl of mdio is
 
-   type tipo_stato is ( WaitStart, Preamble, StartOpcode, MdioAddress, DeviceAddress, TurnAroundDataRead, TurnAroundDataWrite, DataRead, DataWrite );
+   type tipo_stato is ( WaitStart, Preamble, StartOpcode, MdioAddress, DeviceAddress, TurnAroundDataRead, TurnAroundDataWrite, DataRead, DataWrite, PROVACCIA );
    signal start_opcode : std_logic_vector(3 downto 0);
 
    signal stato       	: tipo_stato := WaitStart;
    signal start_conversion_loc : std_logic := '0';
+   
+   signal serial_trigger : std_logic;
 
 begin
    start_opcode <= "00" & opcode;
@@ -85,9 +90,22 @@ begin
 -- 	"110" when DataWrite,
 -- 	"111" when DataRead,
 -- 	"101" when OTHERS;
-	
 
-   process(serial_clock, reset)
+   process(clk_in)
+   begin
+      if rising_edge(clk_in) then
+         serial_trigger <= not serial_trigger;
+      end if;
+   end process;
+
+   process(clk_in)
+   begin
+      if falling_edge(clk_in) then
+         serial_clock <= not serial_clock;
+      end if;
+   end process;
+
+   process(serial_trigger, reset)
       variable bit_counter : natural range 0 to 31 := 0;
    begin
       
@@ -101,7 +119,7 @@ begin
 	 hexint <= x"0";
       else 
 
-	 if falling_edge(serial_clock) then
+	 if falling_edge(serial_trigger) then
 
 	    case stato is
 
@@ -127,13 +145,14 @@ begin
 
 		  if serial_data = '0' then
 		     hexint <= x"2";
-		  end if;
-
-		  if bit_counter > 0 then
-		     bit_counter := bit_counter - 1;
-		  else
-		     stato <= StartOpcode;
-		     bit_counter := 3;
+		     stato <= WaitStart;
+                  else
+		     if bit_counter > 0 then
+		        bit_counter := bit_counter - 1;
+		     else
+   		        stato <= StartOpcode;
+		        bit_counter := 3;
+		     end if;
 		  end if;
 
 	       when StartOpcode =>
@@ -142,8 +161,21 @@ begin
 		  if bit_counter > 0 then
 		     bit_counter := bit_counter - 1;
 		  else
-		     stato <= MdioAddress;
-		     bit_counter := 4;
+		     -- stato <= PROVACCIA; -- MdioAddress;
+		     -- bit_counter := 30;  -- PROVACCIA -- 4;
+		     bit_counter := 15;	 
+  		     stato <= DataRead;
+		  end if;
+	       when PROVACCIA =>
+		  if serial_data = '0' then
+		     hexint <= x"7";
+		     stato <= WaitStart;
+                  else
+		     if bit_counter > 0 then
+		        bit_counter := bit_counter - 1;
+		     else
+   		        stato <= WaitStart;
+		     end if;
 		  end if;
 
 	       when MdioAddress =>
