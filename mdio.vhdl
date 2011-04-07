@@ -163,6 +163,8 @@ begin
 		  else
 		     -- stato <= PROVACCIA; -- MdioAddress;
 		     -- bit_counter := 30;  -- PROVACCIA -- 4;
+
+		     serial_data <= 'Z';
 		     bit_counter := 15;	 
   		     stato <= DataRead;
 		  end if;
