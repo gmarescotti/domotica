@@ -14,6 +14,7 @@ end mdio_tb;
 architecture behav of mdio_tb is
 
    signal clock : std_logic := '0';
+   signal clock_out : std_logic;
    constant clk_in_period : time := 20 ns; -- 50MHz
 
    signal opcode : std_logic_vector(1 downto 0);
@@ -46,7 +47,9 @@ begin
         port map (
                 reset => reset,
 
-		serial_clock => clock,
+		clk_in => clock,
+
+		serial_clock => clock_out,
 	        serial_data  => sda,
 
 		opcode  => opcode, -- 00: Address 10: Read-Inc 01: Write
@@ -63,7 +66,7 @@ begin
       port map (
               reset => reset,
 
-	      serial_clock => clock,
+	      serial_clock => clock_out,
 	      serial_data  => sda,
 
 	      data_read_back  => data_read_back,  -- da leggere

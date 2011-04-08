@@ -49,7 +49,7 @@ entity mdio is
 
 	clk_in 		: in std_logic; -- deve essere < 2.5 MHz!
 
-	serial_clock    : buffer std_logic; -- deve essere < 2.5 MHz!
+	serial_clock    : buffer std_logic := '0'; -- deve essere < 2.5 MHz!
 	serial_data     : inout std_logic;
 
 	-- 00: Address
@@ -76,7 +76,7 @@ architecture rtl of mdio is
    signal stato       	: tipo_stato := WaitStart;
    signal start_conversion_loc : std_logic := '0';
    
-   signal serial_trigger : std_logic;
+   signal serial_trigger : std_logic := '0';
 
 begin
    start_opcode <= "00" & opcode;
@@ -128,6 +128,7 @@ begin
 
 		  if serial_data = '0' then
 		     hexint <= x"1";
+assert false;
 		  end if;
 
 		  if start_conversion /= start_conversion_loc then
@@ -146,6 +147,7 @@ begin
 		  if serial_data = '0' then
 		     hexint <= x"2";
 		     stato <= WaitStart;
+assert false;
                   else
 		     if bit_counter > 0 then
 		        bit_counter := bit_counter - 1;
@@ -161,23 +163,23 @@ begin
 		  if bit_counter > 0 then
 		     bit_counter := bit_counter - 1;
 		  else
-		     -- stato <= PROVACCIA; -- MdioAddress;
-		     -- bit_counter := 30;  -- PROVACCIA -- 4;
+		     -- stato <= MdioAddress;
+		     -- bit_counter := 4;
 
-		     serial_data <= 'Z';
-		     bit_counter := 15;	 
-  		     stato <= DataRead;
+		     stato <= PROVACCIA; -- MdioAddress;
+
+		     bit_counter := 9;
+
 		  end if;
+
 	       when PROVACCIA =>
-		  if serial_data = '0' then
-		     hexint <= x"7";
-		     stato <= WaitStart;
-                  else
-		     if bit_counter > 0 then
-		        bit_counter := bit_counter - 1;
-		     else
-   		        stato <= WaitStart;
-		     end if;
+		  serial_data <= 'Z';
+
+		  if bit_counter > 0 then
+		     bit_counter := bit_counter - 1;
+		  else
+		     bit_counter := 15;
+		     stato <= DataRead;
 		  end if;
 
 	       when MdioAddress =>
