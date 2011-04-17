@@ -15,13 +15,13 @@ NET "uart_write" LOC = "R13";
 ## SFP CONNECTION
 
 # PIN 04
-NET "rate_select" LOC="E6" | IOSTANDARD = "LVTTL";
+# NET "rate_select" LOC="E6" | IOSTANDARD = "LVTTL";
 # PIN 05
 NET "t_fault" 	  LOC="D5" | IOSTANDARD = "LVTTL";
 # PIN 06
 NET "t_dis" 	  LOC="C5" | IOSTANDARD = "LVTTL";
 # PIN 07
-NET "los" 	  LOC="D6" | PULLUP | IOSTANDARD = "LVTTL";
+# NET "los" 	  LOC="D6" | PULLUP | IOSTANDARD = "LVTTL";
 
 # Module Definition 2. Data line for Serial ID.
 # PIN 08
@@ -48,17 +48,23 @@ NET "mod_def<0>"  LOC="C7" | PULLUP | IOSTANDARD = "LVTTL";
 # OLD NET "clkref_serdes_p" LOC = "A4" | IOSTANDARD = "LVDS_25"; # "LVDSEXT_25";
 # OLD NET "clkref_serdes_n" LOC = "B4" | IOSTANDARD = "LVDS_25"; # "LVDSEXT_25";
 
-# NET "clkref_serdes_p" LOC = "B13" | IOSTANDARD = "LVDS_25"; # "LVDSEXT_25";
-# NET "clkref_serdes_n" LOC = "A13" | IOSTANDARD = "LVDS_25"; # "LVDSEXT_25";
+NET "clkref_serdes_p" LOC = "B13" | IOSTANDARD = "LVDS_25"; # "LVDS_25"; # "LVDSEXT_25";
+NET "clkref_serdes_n" LOC = "A13" | IOSTANDARD = "LVDS_25"; # "LVDS_25"; # "LVDSEXT_25";
+
+NET "sysclk_serdes_p" LOC = "D6" | IOSTANDARD = "LVDS_25"; # "LVDS_25"; # "LVDSEXT_25";
+NET "sysclk_serdes_n" LOC = "E6" | IOSTANDARD = "LVDS_25"; # "LVDS_25"; # "LVDSEXT_25";
 
 ####  CLOCK E DATO SERIALI
 ## MDIO and MDC pins are 3.3V LVTTL compliant
 ## The MDIO pin requires a pull-up resistor 
-NET "mdio_sda" LOC="D7" | PULLUP | IOSTANDARD = "LVTTL";
+NET "mdio_sda" LOC="D7" | IOSTANDARD = "LVTTL";
+#NET "mdio_sda" LOC="D7" | PULLUP | IOSTANDARD = "LVTTL";
 NET "mdio_scl" LOC="C8" | IOSTANDARD = "LVTTL";
 
-NET "mdio_sda_slave" LOC="D8" | PULLUP | IOSTANDARD = "LVTTL";
-NET "mdio_scl_slave" LOC="C9" | IOSTANDARD = "LVTTL";
+# INST "mdio_sda" DRIVE=2;
+
+# NET "mdio_sda_slave" LOC="D8" | IOSTANDARD = "LVTTL";
+# NET "mdio_scl_slave" LOC="C9" | IOSTANDARD = "LVTTL";
 
 ##########################################################
 ## LED

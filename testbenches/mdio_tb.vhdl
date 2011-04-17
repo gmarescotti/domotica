@@ -66,6 +66,8 @@ begin
       port map (
               reset => reset,
 
+	      clk_in => clock,
+
 	      serial_clock => clock_out,
 	      serial_data  => sda,
 

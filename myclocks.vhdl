@@ -19,8 +19,13 @@ entity myclocks is
 	  clkref_serdes_p: out std_logic;
 	  clkref_serdes_n: out std_logic;
 
+	  sysclk_serdes_p: in std_logic;
+	  sysclk_serdes_n: in std_logic;
+
           serial_clock : out std_logic;
           clkref_serdes: out std_logic;
+	  
+          sysclk_serdes: out std_logic;
 
 	  -- PLASMA CPU PINS
 	  clk_in      : in std_logic
@@ -35,12 +40,13 @@ begin
 
    clkref_serdes <= clkref_serdes_loc;
    
+   -- CAMBIO ANCORA3: VOGLIO SINCRONO CON CLKREF.
    -- CAMBIO ANCORE: VOGLIO 20KHz. Quindi 50MHz/2500.
    -- CAMBIO: VOGLIO 200KHz. Quindi 50MHz/250.
    -- PRIMA ERA:
    -- converte il clock ref del serdes da 30.7MHz a ~1MHz buono per le seriali
    -- 30,7692MHz / 32 = 0.961 MHz
-   process(clk_in, reset) 
+   process(clkref_serdes_loc, reset) 
       variable clk_counter : integer := 0;
       constant CLK_FRACTION : integer := 2500; -- 32;
    begin
@@ -49,7 +55,7 @@ begin
          serial_clock <= '0';
       else 
 	 -- if rising_edge(clkref_serdes_loc) then
-	 if rising_edge(clk_in) then
+	 if rising_edge(clkref_serdes_loc) then
 	    clk_counter := clk_counter + 1;
 
 	    if clk_counter >= CLK_FRACTION then
@@ -124,6 +130,28 @@ begin
                   OB => clkref_serdes_n,    -- Diff_n output (connect directly to top-level port)
                   I => clkref_serdes_loc        -- Buffer input 
                );
+
+      -- IBUFDS: Differential Input Buffer
+      --         Spartan-3/3E/3A
+      -- Xilinx HDL Language Template, version 11.1
+
+      IBUFDS_inst : IBUFDS
+      generic map (
+		     CAPACITANCE => "DONT_CARE", -- "LOW", "NORMAL", "DONT_CARE" (Virtex-4 only)
+		     DIFF_TERM => FALSE, -- Differential Termination (Virtex-4/5, Spartan-3E/3A)
+		     IBUF_DELAY_VALUE => "0", -- Specify the amount of added input delay for buffer, 
+					      -- "0"-"12" (Spartan-3E)
+					      -- "0"-"16" (Spartan-3A)
+		     IFD_DELAY_VALUE => "AUTO", -- Specify the amount of added delay for input register, 
+						-- "AUTO", "0"-"6" (Spartan-3E)
+						-- "AUTO", "0"-"8" (Spartan-3A)
+		     IOSTANDARD => "DEFAULT")
+      port map (
+		  O => sysclk_serdes,  -- Clock buffer output
+		  I => sysclk_serdes_p,  -- Diff_p clock buffer input (connect directly to top-level port)
+		  IB => sysclk_serdes_n -- Diff_n clock buffer input (connect directly to top-level port)
+	       );
+
    end generate;
 
 end Behavioral;

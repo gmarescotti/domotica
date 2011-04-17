@@ -64,7 +64,7 @@ entity mdio is
 
 	running_conversion  : out std_logic;
 	error_code          : out std_logic_vector(2 downto 0);
-	hexint 		    : out std_logic_vector(3 downto 0)
+	hexint 		    : buffer std_logic_vector(3 downto 0)
    );
 end entity mdio;
 
@@ -76,7 +76,7 @@ architecture rtl of mdio is
    signal stato       	: tipo_stato := WaitStart;
    signal start_conversion_loc : std_logic := '0';
    
-   signal serial_trigger : std_logic := '0';
+   -- signal serial_trigger : std_logic := '0';
 
 begin
    start_opcode <= "00" & opcode;
@@ -94,18 +94,22 @@ begin
    process(clk_in)
    begin
       if rising_edge(clk_in) then
-         serial_trigger <= not serial_trigger;
+         -- serial_clock <= not serial_clock;
       end if;
    end process;
 
-   process(clk_in)
-   begin
-      if falling_edge(clk_in) then
-         serial_clock <= not serial_clock;
-      end if;
-   end process;
+   serial_clock <= clk_in;
 
-   process(serial_trigger, reset)
+   -- process(clk_in)
+   -- begin
+   --    if falling_edge(clk_in) then
+   --       -- serial_clock <= not serial_clock;
+   --       -- serial_trigger <= not serial_trigger;
+   --    end if;
+   -- end process;
+
+   -- process(serial_trigger, reset)
+   process(clk_in, reset)
       variable bit_counter : natural range 0 to 31 := 0;
    begin
       
@@ -119,14 +123,15 @@ begin
 	 hexint <= x"0";
       else 
 
-	 if falling_edge(serial_trigger) then
+	 -- if falling_edge(serial_trigger) then
+	 if falling_edge(clk_in) then
 
 	    case stato is
 
 	       when WaitStart =>
 		  serial_data <= 'Z';
 
-		  if serial_data = '0' then
+		  if hexint = x"0" and serial_data = '0' then
 		     hexint <= x"1";
 assert false;
 		  end if;
@@ -174,6 +179,12 @@ assert false;
 
 	       when PROVACCIA =>
 		  serial_data <= 'Z';
+
+		  if bit_counter < 9 and serial_data = '0' then
+		     hexint <= x"5";
+		     stato <= WaitStart;
+assert false;
+		  end if;
 
 		  if bit_counter > 0 then
 		     bit_counter := bit_counter - 1;

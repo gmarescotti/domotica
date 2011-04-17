@@ -204,6 +204,10 @@ proc test_clocks { } {
    invia 0x61 0x64 ;# SERIALCLOCK
    # after 2000
    puts "SERIALCLOCK= [ ricevi 0x61 true ]"
+
+   invia 0x61 0x65 ;# SYSCLK
+   # after 2000
+   puts "SYSCLK= [ ricevi 0x61 true ]"
 }
 
 #######################################################
@@ -326,7 +330,7 @@ proc test_mdio {} {
    ### mdio write_address 0x00 0x02
    ## puts "Read(0x0002): [ format %x [ mdio read ] ]"
    ## after 200
-   puts "Read-Inc(0x0002): [ format %x [ mdio read_inc ] ]"
+   puts "Read-Inc(0x0002): [ format %x [ mdio read ] ]"
 }
 
 #######################################################

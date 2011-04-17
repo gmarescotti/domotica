@@ -40,6 +40,9 @@ entity main is
 	  clkref_serdes_p: out std_logic;
 	  clkref_serdes_n: out std_logic;
 
+	  sysclk_serdes_p: in std_logic;
+	  sysclk_serdes_n: in std_logic;
+
 	  -- PLASMA CPU PINS
 	  clk_in      : in std_logic;
 	  reset       : in std_logic;
@@ -53,6 +56,7 @@ architecture Behavioral of main is
 
    signal serial_clock 	: std_logic;
    signal clkref_serdes : std_logic;
+   signal sysclk_serdes : std_logic;
 
    -- SIGNAL FOR UART
    signal uart_enable_read  : std_logic;
@@ -166,6 +170,7 @@ begin
    serdes_slave_io : mdio_slave
       port map ( 
             reset	       => reset,
+            clk_in             => serial_clock,
             serial_clock       => mdio_scl_slave,
             serial_data        => mdio_sda_slave,
             data_write_back    => x"1492"
@@ -195,7 +200,8 @@ begin
    port map(
            reset,
            clkref_serdes_p, clkref_serdes_n,
-           serial_clock, clkref_serdes,
+           sysclk_serdes_p, sysclk_serdes_n,
+           serial_clock, clkref_serdes, sysclk_serdes,
            clk_in
    );
 
@@ -205,7 +211,7 @@ begin
    istanzia_menu : uart_menu
       port map(
          reset => reset,
-         clk_in => clk_in, clkref_serdes => clkref_serdes, serial_clock => serial_clock, -- CLOCKS
+         clk_in => clk_in, clkref_serdes => clkref_serdes, sysclk_serdes => sysclk_serdes, serial_clock => serial_clock, -- CLOCKS
          hexint => hexint(0),
 
          uart_enable_read => uart_enable_read,

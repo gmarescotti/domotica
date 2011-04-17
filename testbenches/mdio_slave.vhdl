@@ -7,6 +7,8 @@ USE ieee.std_logic_unsigned.ALL;
 entity mdio_slave is
    port (
 	   reset 	   : in std_logic;
+	   clk_in          : in std_logic;
+
 	   serial_clock    : in std_logic; -- deve essere < 2.5 MHz!
 	   serial_data     : inout std_logic;
 
@@ -35,7 +37,7 @@ begin
    addr <= alladdresses(4 downto 0);
    devaddr <= alladdresses(9 downto 5);
 
-   process(serial_clock, reset)
+   process(clk_in, reset)
 
       variable stato   : tipo_stato := aspetta_preamble;
       variable counter : natural := 31;
@@ -49,7 +51,7 @@ begin
 	 error_code <= "000";
          data_write_back_loc <= data_write_back;
 
-      elsif rising_edge(serial_clock) then
+      elsif rising_edge(clk_in) then
 
 	 serial_data <= 'Z';
 
