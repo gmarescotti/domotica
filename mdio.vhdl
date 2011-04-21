@@ -70,13 +70,13 @@ end entity mdio;
 
 architecture rtl of mdio is
 
-   type tipo_stato is ( WaitStart, Preamble, StartOpcode, MdioAddress, DeviceAddress, TurnAroundDataRead, TurnAroundDataWrite, DataRead, DataWrite, PROVACCIA );
+   type tipo_stato is ( WaitStart, WaitStart2, Preamble, StartOpcode, MdioAddress, DeviceAddress, TurnAroundDataRead, TurnAroundDataWrite, DataRead, DataWrite );
    signal start_opcode : std_logic_vector(3 downto 0);
 
    signal stato       	: tipo_stato := WaitStart;
    signal start_conversion_loc : std_logic := '0';
    
-   -- signal serial_trigger : std_logic := '0';
+   signal serial_trigger : std_logic := '0';
 
 begin
    start_opcode <= "00" & opcode;
@@ -94,22 +94,21 @@ begin
    process(clk_in)
    begin
       if rising_edge(clk_in) then
-         -- serial_clock <= not serial_clock;
+         serial_clock <= not serial_clock;
       end if;
    end process;
 
-   serial_clock <= clk_in;
+   -- serial_clock <= clk_in;
 
-   -- process(clk_in)
-   -- begin
-   --    if falling_edge(clk_in) then
-   --       -- serial_clock <= not serial_clock;
-   --       -- serial_trigger <= not serial_trigger;
-   --    end if;
-   -- end process;
+    process(clk_in)
+    begin
+       if falling_edge(clk_in) then
+          serial_trigger <= not serial_trigger;
+       end if;
+    end process;
 
    -- process(serial_trigger, reset)
-   process(clk_in, reset)
+   process(serial_trigger, reset)
       variable bit_counter : natural range 0 to 31 := 0;
    begin
       
@@ -124,16 +123,18 @@ begin
       else 
 
 	 -- if falling_edge(serial_trigger) then
-	 if falling_edge(clk_in) then
+	 if falling_edge(serial_trigger) then
 
 	    case stato is
 
 	       when WaitStart =>
 		  serial_data <= 'Z';
+		  stato <= WaitStart2;
+		  
+	       when WaitStart2 =>
 
 		  if hexint = x"0" and serial_data = '0' then
 		     hexint <= x"1";
-assert false;
 		  end if;
 
 		  if start_conversion /= start_conversion_loc then
@@ -152,7 +153,6 @@ assert false;
 		  if serial_data = '0' then
 		     hexint <= x"2";
 		     stato <= WaitStart;
-assert false;
                   else
 		     if bit_counter > 0 then
 		        bit_counter := bit_counter - 1;
@@ -168,29 +168,8 @@ assert false;
 		  if bit_counter > 0 then
 		     bit_counter := bit_counter - 1;
 		  else
-		     -- stato <= MdioAddress;
-		     -- bit_counter := 4;
-
-		     stato <= PROVACCIA; -- MdioAddress;
-
-		     bit_counter := 9;
-
-		  end if;
-
-	       when PROVACCIA =>
-		  serial_data <= 'Z';
-
-		  if bit_counter < 9 and serial_data = '0' then
-		     hexint <= x"5";
-		     stato <= WaitStart;
-assert false;
-		  end if;
-
-		  if bit_counter > 0 then
-		     bit_counter := bit_counter - 1;
-		  else
-		     bit_counter := 15;
-		     stato <= DataRead;
+		     stato <= MdioAddress;
+		     bit_counter := 4;
 		  end if;
 
 	       when MdioAddress =>
@@ -236,19 +215,20 @@ assert false;
 
 	       when TurnAroundDataRead =>
 		  serial_data <= 'Z';
+		  
 		  if bit_counter = 0 then
-		     bit_counter := 15;	 
+  	             bit_counter := 15;
 		  else
-		     if serial_data = '0' then
-			stato <= DataRead;
-		     else
-			-- !!!!! stato <= WaitStart; -- ERRORE!
-			stato <= DataRead;
-			error_code <= "001";
-		        hexint <= x"4";
 
+ 	             if serial_data = '0' then
+		        stato <= DataRead;
+		     else
+		        stato <= WaitStart; -- ERRORE!
+		        -- stato <= DataRead;
+		        error_code <= "001";
+		        hexint <= x"4";
 		     end if;
-		  end if;
+                  end if;
 
 	       when DataRead =>
 	          data_read(bit_counter) <= serial_data;
@@ -258,8 +238,10 @@ assert false;
 		  else
 		     stato <= WaitStart;
 		  end if;
+		  
 	       when others =>
 		  stato <= WaitStart;
+ 		  serial_data <= 'Z';
 		  error_code <= "111";
 		  hexint <= x"3";
 

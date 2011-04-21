@@ -92,7 +92,6 @@ proc ricevi { command_check { onenumber false } } {
          }
       }
       set flag_special 0
-
       if $onenumber {
          append ret [ format %.2x $num ]
       } else {
@@ -105,7 +104,6 @@ proc ricevi { command_check { onenumber false } } {
    if $onenumber {
       return [ expr "0x$ret" ]
    }
-
    return $ret
 }
 
@@ -115,7 +113,7 @@ proc init { args } {
    if { [ lsearch "$argv" "-tty" ] >= 0 } {
       set tb [ open "/dev/ttyUSB0" r+] ; # "RDWR NOCTTY NONBLOCK" ] ;#
       # fconfigure $tb -mode 57600,n,8,1 -handshake none -translation binary -blocking 1
-      fconfigure $tb -mode 57600,n,8,1 -handshake none -translation binary -buffering none -blocking 1
+      fconfigure $tb -mode 57600,n,8,1 -handshake none -translation binary -buffering none -blocking true
       puts "OPENED ttyUSB0: $tb!"
    } else {
       # set tb [ open "| ./main_tb 2>log.txt" r+ ]
@@ -260,15 +258,21 @@ proc i2c { op args } {
 }
 
 #######################################################
+proc splitta_2x { num } {
+   set numx [ format %.4x $num ]
+   set ret 0x[ string range $numx 0 1 ]
+   return [ concat $ret 0x[ string range $numx 2 3 ] ]
+}
+
 proc mdio { op args } {
    # invia false [ ascii "c" ] $opcode "$data4>>8" "$data4&0xFF"
    # invia false 0x62 0x61 :# invio dato in MDIO
    switch -exact -- $op {
       "write_address" {
-         eval invia 0x62 0x61 $args
+         eval invia 0x62 0x61 [ splitta_2x $args ]
       }
       "write_data" {
-         eval invia 0x62 0x62 $args
+         eval invia 0x62 0x62 [ splitta_2x $args ]
       }
       "read_inc" {
          eval invia 0x62 0x63
@@ -281,11 +285,10 @@ proc mdio { op args } {
 	 return
       }
    }
-   after 100
    ricevi 0x62 ;# ACKNOWLEDGE INVIO
 
    # ASPETTA CONVERSION DONE
-   after 1000
+   after 100
 
    # LEGGI ERROR_CODE
    eval invia 0x62 0x71
@@ -296,41 +299,81 @@ proc mdio { op args } {
    }
 
    if [ string match "read*" $op ] {
-      after 100
+      # after 300
       # LEGGI DATO
       eval invia 0x62 0x70
-      after 1000
+      # after 1000
       return [ ricevi 0x62 true ] ;# TRUE
    }
 }
 
 #######################################################
-proc test_mdio {} {
-   puts "TEST MDIO..."
+set mdio_address 0
 
-   ## set value [ mdio read ]
-   ## puts "VALUE READ (SB: 0x1968): [format %x $value ]"
+proc test_mdio { { code "" } } {
+   global mdio_address
 
-   ## mdio write_address 0x12 0x45
-   ## after 1000
+   if { $code == "" } {
+      manage_menu "mdio" {
+	 {"read inc" "test_mdio readinc"}
+	 {"read" "test_mdio read"}
+	 {"write address" "test_mdio write_address"}
+	 {"write data" "test_mdio write_data"}
+	 {"read buffer" "test_mdio readbuffer"}
+      }
+      return
+   }
 
-   ## set value [ mdio read ]
-   ## puts "VALUE READ (SB: 0x1245): [format %x $value ]"
-
-   ## mdio write_data 0x33 0x44
-
-   ## set value [ mdio read ]
-   ## puts "VALUE READ (SB: 0x3344): [format %x $value ]"
-
-   puts "Address: 02h 0Eh Value: 2000h: National Semiconductor identifier assigned by the IEEE."
-   ## mdio write_address 0x00 0x03
-   ## after 800
-   # puts "Value(0x0003): [ format %x [ mdio read ] ]"
-
-   ### mdio write_address 0x00 0x02
-   ## puts "Read(0x0002): [ format %x [ mdio read ] ]"
-   ## after 200
-   puts "Read-Inc(0x0002): [ format %x [ mdio read ] ]"
+   switch -exact -- $code {
+      readinc {
+	 puts -nonewline "Read-Inc($mdio_address): "
+	 flush stdout
+	 puts "[ format %x [ mdio read_inc ] ]"
+	 incr mdio_address
+      }
+      read {
+	 puts -nonewline "Read($mdio_address): "
+	 flush stdout
+	 puts "[ format %x [ mdio read ] ]"
+      }
+      readbuffer {
+	 puts -nonewline "quanti: "
+	 flush stdout
+	 gets stdin quanti
+	 for { set i 0 } { $i < $quanti } { incr i } {
+	    puts -nonewline "reg($mdio_address): "
+	    flush stdout
+	    puts "[ format %x [ mdio read_inc ] ]"
+	    incr mdio_address
+	 }
+      }
+      write_address {
+	 puts -nonewline "new address ($mdio_address): "
+	 flush stdout
+	 set address ""
+	 gets stdin address
+	 if [ string is integer $address ] {
+	    mdio write_address $address
+	    set mdio_address $address
+	 } else {
+	    puts "Wrong address: $address"
+	 }
+      }
+      write_data {
+	 puts -nonewline "data ($mdio_address): "
+	 flush stdout
+	 set data ""
+	 gets stdin data
+	 if [ string is integer $data ] {
+	    mdio write_data $data
+	 } else {
+	    puts "Wrong data: $data"
+	 }
+      }
+      default {
+	 puts "Unknown code: $code"
+      }
+   }
 }
 
 #######################################################
@@ -368,31 +411,35 @@ init
 #######################################################
 
 set menu_items {
-   test_mdio
-   test_i2c
-   test_clocks
-   test_codes
-   return
+   {"test mdio" test_mdio}
+   {"test i2c" test_i2c}
+   {"test clocks" test_clocks}
+   {"test codes" test_codes}
 }
 
-proc manage_menu {} {
-   global menu_items
+proc manage_menu { prompt menu_items } {
+   lappend menu_items {"back" return}
 
    while true {
       set i 0
       foreach item $menu_items {
-         puts "$i: $item"
+         puts "$i: [ lindex $item 0 ]"
 	 incr i
       }
-      puts -nonewline " >"
+      puts -nonewline "$prompt> "
       flush stdout
+      set x ""
       gets stdin x
-      eval [ lindex $menu_items $x ]
+      # if [ catch {
+         eval [ lindex [ lindex $menu_items $x ] 1 ]
+      # } err ] {
+	    # puts "Unknown menu: $err"
+      # }
    }
 }
 
 #######################################################
-manage_menu
+manage_menu "root" $menu_items
 
 puts "END OF FILE"
 

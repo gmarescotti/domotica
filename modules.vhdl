@@ -50,7 +50,7 @@ package modules is
 
    	 running_conversion  : out std_logic;
 	 error_code          : out std_logic_vector(2 downto 0);
-	 hexint	  	     : out std_logic_vector(3 downto 0)
+	 hexint	  	     : buffer std_logic_vector(3 downto 0)
       );
    end component;
 

@@ -57,8 +57,8 @@ NET "sysclk_serdes_n" LOC = "E6" | IOSTANDARD = "LVDS_25"; # "LVDS_25"; # "LVDSE
 ####  CLOCK E DATO SERIALI
 ## MDIO and MDC pins are 3.3V LVTTL compliant
 ## The MDIO pin requires a pull-up resistor 
-NET "mdio_sda" LOC="D7" | IOSTANDARD = "LVTTL";
-#NET "mdio_sda" LOC="D7" | PULLUP | IOSTANDARD = "LVTTL";
+#NET "mdio_sda" LOC="D7" | IOSTANDARD = "LVTTL";
+NET "mdio_sda" LOC="D7" | PULLUP | IOSTANDARD = "LVTTL";
 NET "mdio_scl" LOC="C8" | IOSTANDARD = "LVTTL";
 
 # INST "mdio_sda" DRIVE=2;

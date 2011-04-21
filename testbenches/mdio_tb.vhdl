@@ -36,6 +36,7 @@ architecture behav of mdio_tb is
    signal opcode_slave : std_logic_vector(1 downto 0);
    signal addr    : std_logic_vector(4 downto 0);
    signal devaddr : std_logic_vector(4 downto 0);
+   signal hexint  : std_logic_vector(3 downto 0);
 
 begin
 
@@ -59,7 +60,8 @@ begin
 
 		start_conversion => start_conversion,
 		running_conversion => running_conversion,
-		error_code => error_code
+		error_code => error_code,
+		hexint => hexint
 	     );
 
    t1 : mdio_slave

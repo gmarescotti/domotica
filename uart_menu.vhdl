@@ -212,6 +212,8 @@ begin
 		  data_tobe_txed(0) <= x"EE";
 		  hexint2 <= x"4";
 	       else
+   		  -- hexint2 <= data_rxed(3)(3 downto 0);
+
  	          mdio_case: case data_rxed(1) is
 
                      when x"61" => -- 'a' START WRITE ADDRESS TO MDIO
@@ -240,6 +242,8 @@ begin
 
                      ----------------------------------------------------------
                      when x"70" => -- 'd' READ RESULT FROM MDIO
+        		hexint2 <= mdio_data_read(3 downto 0);
+
 			data_tobe_txed(1) <= mdio_data_read(15 downto 8);
 			data_tobe_txed(0) <= mdio_data_read(7 downto 0);
                         counter_loc := 2;
