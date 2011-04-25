@@ -37,7 +37,7 @@ NET "mod_def<0>"  LOC="C7" | PULLUP | IOSTANDARD = "LVTTL";
 
 ##########################################################
 ## A2 EXPANSION CONNECTOR
-## SERDES CONNECTION
+## SERDES CONNECTION SCAN25100
 
 # CLOCK REF 30.7 MHz per SERDES
 
@@ -51,8 +51,8 @@ NET "mod_def<0>"  LOC="C7" | PULLUP | IOSTANDARD = "LVTTL";
 NET "clkref_serdes_p" LOC = "B13" | IOSTANDARD = "LVDS_25"; # "LVDS_25"; # "LVDSEXT_25";
 NET "clkref_serdes_n" LOC = "A13" | IOSTANDARD = "LVDS_25"; # "LVDS_25"; # "LVDSEXT_25";
 
-NET "sysclk_serdes_p" LOC = "D6" | IOSTANDARD = "LVDS_25"; # "LVDS_25"; # "LVDSEXT_25";
-NET "sysclk_serdes_n" LOC = "E6" | IOSTANDARD = "LVDS_25"; # "LVDS_25"; # "LVDSEXT_25";
+#NET "sysclk_serdes_p" LOC = "D6" | IOSTANDARD = "LVDS_25"; # "LVDS_25"; # "LVDSEXT_25";
+#NET "sysclk_serdes_n" LOC = "E6" | IOSTANDARD = "LVDS_25"; # "LVDS_25"; # "LVDSEXT_25";
 
 ####  CLOCK E DATO SERIALI
 ## MDIO and MDC pins are 3.3V LVTTL compliant
@@ -65,6 +65,40 @@ NET "mdio_scl" LOC="C8" | IOSTANDARD = "LVTTL";
 
 # NET "mdio_sda_slave" LOC="D8" | IOSTANDARD = "LVTTL";
 # NET "mdio_scl_slave" LOC="C9" | IOSTANDARD = "LVTTL";
+
+## SERDES CONNECTION SCAN25100
+
+# pin 52 -> B1:5 -> T3
+NET "rxclk" LOC="T3";
+# rout[0..9] -> pin 53..62 -> B1:(8  ,7  , 10 ,9  , 12 ,11 , 14 ,13, 16 ,15) 
+#                             -> (C11,N11, D11,P10, C12,R10, D12,T7, E11,R7)
+
+NET "rout<0>" LOC="C11";
+NET "rout<1>" LOC="N11";
+NET "rout<2>" LOC="D11";
+NET "rout<3>" LOC="P10";
+NET "rout<4>" LOC="C12";
+NET "rout<5>" LOC="R10";
+NET "rout<6>" LOC="D12";
+NET "rout<7>" LOC="T7";
+NET "rout<8>" LOC="E11";
+NET "rout<9>" LOC="R7";
+
+# pin 64 -> B1:18 -> B16
+NET "txclk" LOC="B16";
+
+# din[0-9] -> pin 65..74 -> B1:(20,19, 22 ,21,  24,23,   26,25,   28,27)
+#                           -> (R3,M6, C16,C15, D16,D15, E16,E15, G15,F15) 
+NET "din<0>" LOC="R3";
+NET "din<1>" LOC="M6";
+NET "din<2>" LOC="C16";
+NET "din<3>" LOC="C15";
+NET "din<4>" LOC="D16";
+NET "din<5>" LOC="D15";
+NET "din<6>" LOC="E16";
+NET "din<7>" LOC="E15";
+NET "din<8>" LOC="G15";
+NET "din<9>" LOC="F15";
 
 ##########################################################
 ## LED

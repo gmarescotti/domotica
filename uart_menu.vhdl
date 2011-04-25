@@ -17,7 +17,8 @@ entity uart_menu is
    port(
       reset		: in std_logic;
       clk_in		: in std_logic;
-      clkref_serdes, sysclk_serdes, serial_clock : in std_logic;
+      clkref_serdes, rxclk_serdes, serial_clock : in std_logic;
+      
       hexint		: out std_logic_vector(3 downto 0);
 
       uart_enable_read  : buffer std_logic := '0';
@@ -51,7 +52,7 @@ architecture menu1 of uart_menu is
    -- signal start_clock_test2 : std_logic := '0';
    signal numof_clkclock : std_logic_vector(15 downto 0) := (OTHERS => '0');
    signal numof_refclock : std_logic_vector(15 downto 0) := (OTHERS => '0'); 
-   signal numof_sysclock : std_logic_vector(15 downto 0) := (OTHERS => '0'); 
+   signal numof_rxclock : std_logic_vector(15 downto 0) := (OTHERS => '0'); 
    signal numof_serial_clock : std_logic_vector(15 downto 0) := (OTHERS => '0'); 
    -- signal mdio_start_conversion_loc : std_logic := '0';
 
@@ -193,8 +194,8 @@ begin
                      counter_loc := 2;
 
  	          when x"65" =>
-                     data_tobe_txed(1) <= numof_sysclock(15 downto 8);
-                     data_tobe_txed(0) <= numof_sysclock(7  downto 0);
+                     data_tobe_txed(1) <= numof_rxclock(15 downto 8);
+                     data_tobe_txed(0) <= numof_rxclock(7  downto 0);
  
                      counter_loc := 2;
 		     
@@ -466,13 +467,13 @@ begin
     clk_calculator: process(clk_in, clkref_serdes, serial_clock, reset, start_clock_test)
        variable counter : natural := 0;
        variable counter_ref : natural := 0;
-       variable counter_sysclk : natural := 0;
+       variable counter_rxclk : natural := 0;
        variable counter_serial : natural := 0;
     begin
        if start_clock_test = '0' or reset ='1' then
           counter := 0;
           counter_ref := 0;
-          counter_sysclk := 0;
+          counter_rxclk := 0;
           counter_serial := 0;
        else
           if counter < 50000 then
@@ -482,8 +483,8 @@ begin
              if rising_edge(clkref_serdes) then
       	       counter_ref := counter_ref + 1;
              end if;
-             if rising_edge(sysclk_serdes) then
-      	       counter_sysclk := counter_sysclk + 1;
+             if rising_edge(rxclk_serdes) then
+      	       counter_rxclk := counter_rxclk + 1;
              end if;
              if rising_edge(serial_clock) then
       	       counter_serial := counter_serial + 1;
@@ -491,7 +492,7 @@ begin
           else
 	     numof_clkclock <= std_logic_vector(to_unsigned(counter,16));
 	     numof_refclock <= std_logic_vector(to_unsigned(counter_ref,16));
-	     numof_sysclock <= std_logic_vector(to_unsigned(counter_sysclk,16));
+	     numof_rxclock <= std_logic_vector(to_unsigned(counter_rxclk,16));
 	     numof_serial_clock <= std_logic_vector(to_unsigned(counter_serial,16));
           end if;
        end if;

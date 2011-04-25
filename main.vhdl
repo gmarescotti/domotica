@@ -40,8 +40,14 @@ entity main is
 	  clkref_serdes_p: out std_logic;
 	  clkref_serdes_n: out std_logic;
 
-	  sysclk_serdes_p: in std_logic;
-	  sysclk_serdes_n: in std_logic;
+--	  sysclk_serdes_p: in std_logic;
+--	  sysclk_serdes_n: in std_logic;
+
+          rxclk		: in std_logic;
+	  rout		: in std_logic_vector(9 downto 0);
+
+          txclk		: out std_logic;
+	  din		: out std_logic_vector(9 downto 0);	  
 
 	  -- PLASMA CPU PINS
 	  clk_in      : in std_logic;
@@ -56,7 +62,7 @@ architecture Behavioral of main is
 
    signal serial_clock 	: std_logic;
    signal clkref_serdes : std_logic;
-   signal sysclk_serdes : std_logic;
+   -- signal sysclk_serdes : std_logic;
 
    -- SIGNAL FOR UART
    signal uart_enable_read  : std_logic;
@@ -99,6 +105,25 @@ begin
    led(7 downto 4) <= (OTHERS => '0');
 
    led(3)       <= mdio_sda;
+   
+   din(8) <= '0' when tasto(7) = '1' else 'Z'; -- DIN [8] is used as K-code select pin
+		-- When DIN [8] is low, DIN [0-7] is mapped to the
+		-- corresponding 10-bit D-group. When DIN [8] is high, DIN [0-7] is mapped to the
+		-- corresponding 10-bit K-group.
+
+   din(9) <= '0' when tasto(7) = '1' else 'Z'; -- and DIN[9] should be tied Low.
+   
+   -- ROUT [8] is the K-group indicator. A low at ROUT [8] indicates ROUT [0-7] belongs
+   -- to the D-group, while a high indicates it belongs to the K-group. ROUT [9] is the line
+   -- code violation (LCV) indicator. ROUT [9] is high for one ROUT cycle when a line code
+   -- violation occurs.
+
+   -- din(7 downto 0) <= 'Z';
+   
+   din(7 downto 0) <= rout(7 downto 0) when tasto(7) = '1' else (OTHERS => 'Z');
+   
+   txclk <= rxclk when tasto(7) = '1' else 'Z';
+
 
 --   -- ritardo il fronte di discesa di mdio_scl con monostabile
 --   clock_pro: process(clk_in) is
@@ -198,11 +223,12 @@ begin
     -- Genero tutti i clock del progetto
    instanzia_clocks : myclocks
    port map(
-           reset,
-           clkref_serdes_p, clkref_serdes_n,
-           sysclk_serdes_p, sysclk_serdes_n,
-           serial_clock, clkref_serdes, sysclk_serdes,
-           clk_in
+           reset => reset,
+           clkref_serdes_p => clkref_serdes_p, clkref_serdes_n => clkref_serdes_n,
+--           sysclk_serdes_p, sysclk_serdes_n,
+           serial_clock => serial_clock, clkref_serdes => clkref_serdes,
+--	   sysclk_serdes,
+           clk_in => clk_in
    );
 
    -- Gestisce un protocollino su seriale
@@ -211,8 +237,12 @@ begin
    istanzia_menu : uart_menu
       port map(
          reset => reset,
-         clk_in => clk_in, clkref_serdes => clkref_serdes, sysclk_serdes => sysclk_serdes, serial_clock => serial_clock, -- CLOCKS
-         hexint => hexint(0),
+         clk_in => clk_in, clkref_serdes => clkref_serdes, 
+	 -- sysclk_serdes => sysclk_serdes, 
+	 serial_clock => serial_clock, -- CLOCKS
+	 rxclk_serdes => rxclk,
+         
+	 hexint => hexint(0),
 
          uart_enable_read => uart_enable_read,
          uart_enable_write => uart_enable_write,

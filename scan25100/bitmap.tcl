@@ -392,3 +392,4 @@ foreach address [ array names reg -regexp {^[^,]+$} ] {
    check_reg_defaults $address
 }
 
+parray reg
