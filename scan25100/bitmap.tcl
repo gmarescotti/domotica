@@ -281,6 +281,7 @@ proc riempi_reg {} {
    
       set reg($address) $title
       set reg($address,vdefault) $vdefault
+      set reg($address,value) "????"
    
       # D15-D0 16'd0 Tser Lower RO Lower 16 Tser DCM bits. Tser is defined as the serializer delay.
       # D6-D2 Reserved - Reserved for future use. Returns undefined value when read.
@@ -297,10 +298,13 @@ proc riempi_reg {} {
 	    set reg($address,bit,$range) $str
 	    set reg($address,bit,$range,range) $range
 	    set reg($address,bit,$range,def) [ get_bit_default $def ]
+	    set reg($address,bit,$range,defx) [ get_hex_default $def ]
 
 	    set reg($address,bit,$range,name) $name
 	    set reg($address,bit,$range,access) $access
 	    set reg($address,bit,$range,description) $descr
+
+	    set reg($address,bit,$range,value) "?"
 	 }
 
          set str [ get_next 0 ]
@@ -362,6 +366,13 @@ proc get_bit_default { str_def } {
    return $bitdef
 }
 
+proc get_hex_default { str_def } {
+   set bitdef [ get_bit_default $str_def ]
+   set bitdef [ scan $bitdef %d ] ;# CANCELLA GLI 0 DAVANTI
+   set bitdef [ format %.16d $bitdef ] ;# AGGIUNGE ZERO DAVANTI
+   return [ format %x [ bin2int $bitdef ] ]
+}
+
 ########################################################################
 proc check_reg_defaults { address } {
    global reg
@@ -388,8 +399,41 @@ proc check_reg_defaults { address } {
 
 ########################################################################
 riempi_reg
+
+###############################
 foreach address [ array names reg -regexp {^[^,]+$} ] {
    check_reg_defaults $address
 }
+ 
+###############################
+lappend argv -nostandalone
+source com.tcl
 
-parray reg
+###############################
+trace add variable reg { write } reg_callback
+
+proc reg_callback { ar_ref index op } {
+   upvar $ar_ref ar
+   puts "$ar_ref ($index) -> $ar($index)"
+
+   if { [ regexp {(\w*),} $index {} address ] != "1" } {
+      puts "WRONG $index!"
+      return -1
+   }
+
+   switch -regexp -- $index {
+      "^$address,value$" {
+         # set reg($address,value) 
+	 puts "ADDRESS AND VALUE with address $address"
+      }
+      "^$address,bit,[^,]*,value$" {
+	 puts "BITRANGE MNODIFIED with address $address"
+      }
+      default {
+	 puts "WRONG index $index with address $address"
+      }
+   }
+}
+
+###############################
+

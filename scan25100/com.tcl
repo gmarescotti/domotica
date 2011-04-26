@@ -403,12 +403,6 @@ proc test_i2c {} {
 }
 
 #######################################################
-set verbose false
-# set verbose true
-
-init
-
-#######################################################
 
 set menu_items {
    {"test mdio" test_mdio}
@@ -439,11 +433,20 @@ proc manage_menu { prompt menu_items } {
 }
 
 #######################################################
-manage_menu "root" $menu_items
+if { [ lsearch "$argv" "-nostandalone" ] == -1 } {
+   puts "Running standalone"
 
-puts "END OF FILE"
+   set verbose false
+   # set verbose true
 
-if [ catch "close $tb" err ] {
-   puts "ERROR Closing: $err"
+   init
+
+   manage_menu "root" $menu_items
+   
+   puts "END OF FILE"
+   
+   if [ catch "close $tb" err ] {
+      puts "ERROR Closing: $err"
+   }
 }
 
