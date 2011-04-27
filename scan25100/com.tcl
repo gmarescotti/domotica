@@ -1,4 +1,4 @@
-#!/usr/bin/tclsh
+namespace eval com {
 
 # 01: invio dato in MDIO
 #   TX:
@@ -28,9 +28,9 @@ set list_special_characters {0 1 10 13} ;# EOF SPECIALCHAR LF CR
 
 #######################################################
 proc invia { args } {
-   global verbose
-   global tb
-   global list_special_characters
+   variable verbose
+   variable tb
+   variable list_special_characters
 
    foreach dato $args {
       # converte in decimale ( se in forma 0x.. e esegue eventuali oper.)
@@ -55,8 +55,8 @@ proc invia { args } {
 
 #######################################################
 proc ricevi { command_check { onenumber false } } {
-   global verbose
-   global tb
+   variable verbose
+   variable tb
    set ret ""
 
    if $verbose { puts "RICEZIONE:" }
@@ -109,7 +109,8 @@ proc ricevi { command_check { onenumber false } } {
 
 #######################################################
 proc init { args } {
-   global tb argc argv
+   variable tb
+   global argc argv
    if { [ lsearch "$argv" "-tty" ] >= 0 } {
       set tb [ open "/dev/ttyUSB0" r+] ; # "RDWR NOCTTY NONBLOCK" ] ;#
       # fconfigure $tb -mode 57600,n,8,1 -handshake none -translation binary -blocking 1
@@ -147,14 +148,14 @@ proc ascii { args } {
 
 #######################################################
 proc read_callback { args } {
-   global tb
+   variable tb
    if ![eof $tb] {
       puts "[ gets $tb ]"
    }
 }
 
 proc testa_tty {} {
-   global tb
+   variable tb
    fileevent $tb readable read_callback
    polling
 
@@ -210,7 +211,7 @@ proc test_clocks { } {
 
 #######################################################
 proc test_codes { } {
-   global list_special_characters
+   variable list_special_characters
    puts "TESTING CODES $list_special_characters USING ECHO..."
    # invia ascii("x") 0x61 0x62 0x63 0x64 0x65
    eval invia [ ascii "x" ] $list_special_characters 0x33
@@ -264,18 +265,21 @@ proc splitta_2x { num } {
    return [ concat $ret 0x[ string range $numx 2 3 ] ]
 }
 
+variable mdio_address 0
 proc mdio { op args } {
    # invia false [ ascii "c" ] $opcode "$data4>>8" "$data4&0xFF"
    # invia false 0x62 0x61 :# invio dato in MDIO
    switch -exact -- $op {
       "write_address" {
          eval invia 0x62 0x61 [ splitta_2x $args ]
+	 set mdio_address $address
       }
       "write_data" {
          eval invia 0x62 0x62 [ splitta_2x $args ]
       }
       "read_inc" {
          eval invia 0x62 0x63
+         incr mdio_address
       }
       "read" {
          eval invia 0x62 0x64
@@ -308,145 +312,9 @@ proc mdio { op args } {
 }
 
 #######################################################
-set mdio_address 0
-
-proc test_mdio { { code "" } } {
-   global mdio_address
-
-   if { $code == "" } {
-      manage_menu "mdio" {
-	 {"read inc" "test_mdio readinc"}
-	 {"read" "test_mdio read"}
-	 {"write address" "test_mdio write_address"}
-	 {"write data" "test_mdio write_data"}
-	 {"read buffer" "test_mdio readbuffer"}
-      }
-      return
-   }
-
-   switch -exact -- $code {
-      readinc {
-	 puts -nonewline "Read-Inc($mdio_address): "
-	 flush stdout
-	 puts "[ format %x [ mdio read_inc ] ]"
-	 incr mdio_address
-      }
-      read {
-	 puts -nonewline "Read($mdio_address): "
-	 flush stdout
-	 puts "[ format %x [ mdio read ] ]"
-      }
-      readbuffer {
-	 puts -nonewline "quanti: "
-	 flush stdout
-	 gets stdin quanti
-	 for { set i 0 } { $i < $quanti } { incr i } {
-	    puts -nonewline "reg($mdio_address): "
-	    flush stdout
-	    puts "[ format %x [ mdio read_inc ] ]"
-	    incr mdio_address
-	 }
-      }
-      write_address {
-	 puts -nonewline "new address ($mdio_address): "
-	 flush stdout
-	 set address ""
-	 gets stdin address
-	 if [ string is integer $address ] {
-	    mdio write_address $address
-	    set mdio_address $address
-	 } else {
-	    puts "Wrong address: $address"
-	 }
-      }
-      write_data {
-	 puts -nonewline "data ($mdio_address): "
-	 flush stdout
-	 set data ""
-	 gets stdin data
-	 if [ string is integer $data ] {
-	    mdio write_data $data
-	 } else {
-	    puts "Wrong data: $data"
-	 }
-      }
-      default {
-	 puts "Unknown code: $code"
-      }
-   }
-}
-
-#######################################################
-proc test_i2c {} {
-   puts "TEST I2C..."
-
-   set value [ i2c current_address_read ]
-   puts "CURRENT ADDRESS READ (SB:???): [format %x $value ]"
-
-   # puts "BYTE WRITE 0x19 0x81"
-   # i2c byte_write 0x19 0x81
-   # after 1000
-
-   # set value [ i2c current_address_read ]
-   # puts "CURRENT ADDRESS READ (SB:): [format %x $value ]"
-
-   set value [ i2c random_read 0x0 ]
-   puts "RANDOM READ IN 0x0 (SB:): [format %x $value ]"
-   set value [ i2c current_address_read ]
-   puts "RANDOM READ IN 0x1 (SB:): [format %x $value ]"
-   set value [ i2c current_address_read ]
-   puts "RANDOM READ IN 0x2 (SB:): [format %x $value ]"
-   set value [ i2c current_address_read ]
-   puts "RANDOM READ IN 0x3 (SB:): [format %x $value ]"
-   set value [ i2c current_address_read ]
-   puts "RANDOM READ IN 0x4 (SB:): [format %x $value ]"
-}
-
-#######################################################
-
-set menu_items {
-   {"test mdio" test_mdio}
-   {"test i2c" test_i2c}
-   {"test clocks" test_clocks}
-   {"test codes" test_codes}
-}
-
-proc manage_menu { prompt menu_items } {
-   lappend menu_items {"back" return}
-
-   while true {
-      set i 0
-      foreach item $menu_items {
-         puts "$i: [ lindex $item 0 ]"
-	 incr i
-      }
-      puts -nonewline "$prompt> "
-      flush stdout
-      set x ""
-      gets stdin x
-      # if [ catch {
-         eval [ lindex [ lindex $menu_items $x ] 1 ]
-      # } err ] {
-	    # puts "Unknown menu: $err"
-      # }
-   }
-}
-
-#######################################################
 if { [ lsearch "$argv" "-nostandalone" ] == -1 } {
-   puts "Running standalone"
+   source com_menus.tcl
+}
 
-   set verbose false
-   # set verbose true
-
-   init
-
-   manage_menu "root" $menu_items
-   
-   puts "END OF FILE"
-   
-   if [ catch "close $tb" err ] {
-      puts "ERROR Closing: $err"
-   }
 }
 

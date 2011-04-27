@@ -1,3 +1,5 @@
+namespace eval bitmap {
+
 set register_description {
 Reserved
 Address: 00h Value: 0000h
@@ -247,7 +249,7 @@ D4-D0 5'd0 Tout-in Upper RO Upper 5 Tout-in DCM bits. Tout-in is defined as the 
 ############################################
 set all [ split $register_description \n ]
 proc get_next { { remove 1 } } {
-   global all
+   variable all
    if { [ llength $all ] == 0 } {
       return ""
    }
@@ -260,7 +262,7 @@ proc get_next { { remove 1 } } {
    return $ret
 }
 proc go_next_reg {} {
-   global all
+   variable all
    while { [ get_next ] != "" } {}
 
    while { [ llength $all ] > 0 } {
@@ -271,8 +273,8 @@ proc go_next_reg {} {
 }
 ############################################
 
-proc riempi_reg {} {
-   global reg
+proc riempi_reg { reg_ref } {
+   upvar $reg_ref reg
    while { [ go_next_reg ] } {
       set title [get_next]
       if { [ scan [ get_next ] "Address: %2xh Value: %4xh" address default ] != 2 } {
@@ -310,6 +312,9 @@ proc riempi_reg {} {
          set str [ get_next 0 ]
       }
    }
+
+   check_allregisters_defaults $reg_ref
+   trace add variable reg { write } ::bitmap::reg_callback
 }
 
 ########################################################################
@@ -368,8 +373,10 @@ proc get_bin_default { str_def } {
 }
 
 proc bin2hex { i } {
-   set bitdef [ scan $i %d ] ;# CANCELLA GLI 0 DAVANTI
-   set bitdef [ format %.16d $bitdef ] ;# AGGIUNGE ZERO DAVANTI
+   set bitdef [ string trimleft $i 0 ]
+   if { $bitdef == "" } { set bitdef 0 }
+   set bitdef [ format %016s $bitdef ] ;# AGGIUNGE ZERO DAVANTI
+
    return [ format %x [ bin2int $bitdef ] ]
 }
 
@@ -393,8 +400,8 @@ proc change_bits { bitvar_ref bitrange bitvalue } {
 }
 
 ########################################################################
-proc check_reg_default { address } {
-   global reg
+proc check_reg_default { reg_ref address } {
+   upvar $reg_ref reg
    
    # puts "ADDRESS: $address"
    set address_default "----------------"
@@ -418,7 +425,6 @@ proc reg_callback { ar_ref index op } {
 
    switch -glob -- $index {
       "value" {
-         # set reg($address,value) 
 	 puts "ADDRESS $address: $ar($address,$index) ([ hex2bin $ar($address,$index) ])"
       }
       "bit,[D0-9\-]*,value" {
@@ -439,22 +445,15 @@ proc reg_callback { ar_ref index op } {
 }
 
 ##############################################################
-proc check_allregisters_defaults {} {
+proc check_allregisters_defaults { reg_ref } {
+   upvar $reg_ref reg
    foreach address [ array names reg -regexp {^[^,]+$} ] {
-      check_reg_default $address
+      check_reg_default $reg_ref $address
    }
    puts "CHECK DEFAULTS...OK"
 }
 
 ##############################################################
-riempi_reg
 
-check_allregisters_defaults
-
-# LOAD COMMUNICATION FEATURES WITH SPARTAN3
-lappend argv -nostandalone ;# Skip away menu loop
-source com.tcl
-
-#################################################
-trace add variable reg { write } reg_callback
+} ;# NAMESPACE...
 

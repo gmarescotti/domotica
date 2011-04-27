@@ -2466,6 +2466,26 @@ proc vTcl:project:info {} {
     namespace eval ::widgets::$site_6_0.cpd78 {
         array set save {-borderwidth 1 -relief 1 -text 1 -width 1}
     }
+    namespace eval ::widgets::$site_6_0.cpd61 {
+        array set save {-borderwidth 1 -height 1}
+    }
+    set site_7_0 $site_6_0.cpd61
+    namespace eval ::widgets::$site_7_0.01 {
+        array set save {-anchor 1 -text 1}
+    }
+    namespace eval ::widgets::$site_7_0.02 {
+        array set save {-borderwidth 1 -cursor 1 -state 1 -textvariable 1 -width 1}
+    }
+    namespace eval ::widgets::$site_6_0.cpd62 {
+        array set save {-borderwidth 1 -height 1}
+    }
+    set site_7_0 $site_6_0.cpd62
+    namespace eval ::widgets::$site_7_0.01 {
+        array set save {-anchor 1 -text 1}
+    }
+    namespace eval ::widgets::$site_7_0.02 {
+        array set save {-borderwidth 1 -cursor 1 -state 1 -textvariable 1 -width 1}
+    }
     namespace eval ::widgets::$site_5_0.fra66 {
         array set save {-height 1 -width 1}
     }
@@ -2522,10 +2542,10 @@ proc vTcl:project:info {} {
 proc ::main {argc argv} {
 global widget
 
-global reg
+global mappa
 
-foreach addr [ lsort -dictionary [ array names reg -regexp {^[^,]+$} ] ] {
-   lappend ::list_addrs "$addr: $reg($addr)"
+foreach addr [ lsort -dictionary [ array names mappa -regexp {^[^,]+$} ] ] {
+   lappend ::list_addrs "$addr: $mappa($addr)"
 }
 
 # vTcl:DefineAlias "$site_6_0.cpd77" "MyAddrs" vTcl:WidgetProc "$top" 1
@@ -2541,43 +2561,48 @@ proc ::fill_listbox {address} {
 global widget
 
 # Array con tutte le info sui registri scan25100 serdes National
-global reg
+global mappa
 
 # "scan string format ?varName varName ...?"
 # set address [ $widget(MyAddrs) subwidget listbox curselection ]
 scan $address %d address
 
-if ![ info exists reg($address) ] {
+if ![ info exists mappa($address) ] {
    tk_messageBox -message "WRONG address: $address"
    return
 }
 
 $widget(mclistbox) delete 0 end
 
-# reg(6)                          = Transmit De-Emphasis
-# reg(6,bit,D1-D0)                = D1-D0 2'b00 TX DE RW Transmit De-Emphasis: Sets transmit de-emphasis when PE[1:0] pins are low or floating.
-# reg(6,bit,D1-D0,access)         = RW
-# reg(6,bit,D1-D0,def)            = 00
-# reg(6,bit,D1-D0,description)    = Transmit De-Emphasis: Sets transmit de-emphasis when PE[1:0] pins are low or floating.
-# reg(6,bit,D1-D0,name)           = TX DE
-# reg(6,bit,D1-D0,range)          = D1-D0
-# reg(6,bit,D15-D8)               = D15-D8 8'h20 Hyperframe Size RW Sets non-CPRI hyperframe length.
-# reg(6,bit,D15-D8,access)        = RW
-# reg(6,bit,D15-D8,def)           = 00100000
-# reg(6,bit,D15-D8,description)   = Sets non-CPRI hyperframe length.
-# reg(6,bit,D15-D8,name)          = Hyperframe Size
-# reg(6,bit,D15-D8,range)         = D15-D8
-# reg(6,vdefault)                 = 8192
+# mappa(6)                          = Transmit De-Emphasis
+# mappa(6,bit,D1-D0)                = D1-D0 2'b00 TX DE RW Transmit De-Emphasis: Sets transmit de-emphasis when PE[1:0] pins are low or floating.
+# mappa(6,bit,D1-D0,access)         = RW
+# mappa(6,bit,D1-D0,default)            = 00
+# mappa(6,bit,D1-D0,description)    = Transmit De-Emphasis: Sets transmit de-emphasis when PE[1:0] pins are low or floating.
+# mappa(6,bit,D1-D0,name)           = TX DE
+# mappa(6,bit,D1-D0,range)          = D1-D0
+# mappa(6,bit,D15-D8)               = D15-D8 8'h20 Hyperframe Size RW Sets non-CPRI hyperframe length.
+# mappa(6,bit,D15-D8,access)        = RW
+# mappa(6,bit,D15-D8,default)           = 00100000
+# mappa(6,bit,D15-D8,description)   = Sets non-CPRI hyperframe length.
+# mappa(6,bit,D15-D8,name)          = Hyperframe Size
+# mappa(6,bit,D15-D8,range)         = D15-D8
+# mappa(6,vdefault)                 = 8192
 
-foreach key [ array names reg -regexp "$address,bit,\[^,\]+$" ] {
+foreach key [ array names mappa -regexp "^$address,bit,\[^,\]+$" ] {
    set line ""
 
-   foreach col { range defx name access description } {
-      lappend line $reg($key,$col)
+   foreach col { range defaultx name access description } {
+      lappend line $mappa($key,$col)
    }
    $widget(mclistbox) insert end $line
    puts >>>>>>>>$line
 }
+
+###### SET WIDGETS WITH DEFAULT AND VALUE FOR CURRENT ADDRESS
+global address_value address_default
+set address_value [ format %.4X $mappa($address,value) ]
+set address_default [ format %.4X $mappa($address,default) ]
 }
 
 #############################################################################
@@ -2602,7 +2627,7 @@ proc vTclWindow. {base} {
     ###################
     wm focusmodel $top passive
     wm geometry $top 1x1+0+0; update
-    wm maxsize $top 1265 994
+    wm maxsize $top 1425 870
     wm minsize $top 1 1
     wm overrideredirect $top 0
     wm resizable $top 1 1
@@ -2633,7 +2658,7 @@ proc vTclWindow.top60 {base} {
     vTcl:toplevel $top -class Toplevel \
         -highlightcolor black 
     wm focusmodel $top passive
-    wm geometry $top 521x422+417+275; update
+    wm geometry $top 607x422+428+260; update
     wm maxsize $top 1425 870
     wm minsize $top 1 1
     wm overrideredirect $top 0
@@ -2660,7 +2685,7 @@ proc vTclWindow.top60 {base} {
     set site_6_0 $site_5_page1.fra76
     tixComboBox $site_6_0.cpd77 \
         -command {global widget
-global reg
+global mappa
 fill_listbox } -dropdown 1 \
         -editable 0 -fancy 0 -history 0 -prunehistory 1 -label Address \
         -relief ridge 
@@ -2668,10 +2693,48 @@ fill_listbox } -dropdown 1 \
     button $site_6_0.cpd78 \
         -borderwidth 1 -relief ridge -text reload -width 8 
     vTcl:DefineAlias "$site_6_0.cpd78" "Button5" vTcl:WidgetProc "$top" 1
+    frame $site_6_0.cpd61 \
+        -borderwidth 1 -height 30 
+    vTcl:DefineAlias "$site_6_0.cpd61" "Frame5" vTcl:WidgetProc "$top" 1
+    set site_7_0 $site_6_0.cpd61
+    label $site_7_0.01 \
+        -anchor w -text default: 
+    vTcl:DefineAlias "$site_7_0.01" "Label2" vTcl:WidgetProc "$top" 1
+    entry $site_7_0.02 \
+        -borderwidth 1 -cursor {} -state readonly \
+        -textvariable address_default -width 4 
+    vTcl:DefineAlias "$site_7_0.02" "Entry1" vTcl:WidgetProc "$top" 1
+    pack $site_7_0.01 \
+        -in $site_7_0 -anchor center -expand 0 -fill none -padx 2 -pady 2 \
+        -side left 
+    pack $site_7_0.02 \
+        -in $site_7_0 -anchor center -expand 1 -fill x -padx 2 -pady 2 \
+        -side right 
+    frame $site_6_0.cpd62 \
+        -borderwidth 1 -height 30 
+    vTcl:DefineAlias "$site_6_0.cpd62" "Frame6" vTcl:WidgetProc "$top" 1
+    set site_7_0 $site_6_0.cpd62
+    label $site_7_0.01 \
+        -anchor w -text value: 
+    vTcl:DefineAlias "$site_7_0.01" "Label3" vTcl:WidgetProc "$top" 1
+    entry $site_7_0.02 \
+        -borderwidth 1 -cursor {} -state readonly -textvariable address_value \
+        -width 4 
+    vTcl:DefineAlias "$site_7_0.02" "Entry2" vTcl:WidgetProc "$top" 1
+    pack $site_7_0.01 \
+        -in $site_7_0 -anchor center -expand 0 -fill none -padx 2 -pady 2 \
+        -side left 
+    pack $site_7_0.02 \
+        -in $site_7_0 -anchor center -expand 1 -fill x -padx 2 -pady 2 \
+        -side right 
     pack $site_6_0.cpd77 \
         -in $site_6_0 -anchor center -expand 0 -fill none -side left 
     pack $site_6_0.cpd78 \
         -in $site_6_0 -anchor e -expand 0 -fill none -side left 
+    pack $site_6_0.cpd61 \
+        -in $site_6_0 -anchor center -expand 0 -fill none -side left 
+    pack $site_6_0.cpd62 \
+        -in $site_6_0 -anchor center -expand 0 -fill none -side left 
     pack $site_5_page1.fra76 \
         -in $site_5_page1 -anchor center -expand 0 -fill x -side top 
     frame $site_5_page1.fra66 \
@@ -2684,7 +2747,7 @@ fill_listbox } -dropdown 1 \
     $site_6_0.mcl66 column add col1 \
         -label Bit -labelrelief raised -resizable 0 -width 8 
     $site_6_0.mcl66 column add col2 \
-        -label Default -labelrelief raised -resizable 0 -width 7 
+        -label Value -labelrelief raised -resizable 0 -width 7 
     $site_6_0.mcl66 column add col3 \
         -label {Bit Name} -labelrelief raised -resizable 0 -width 15 
     $site_6_0.mcl66 column add col4 \
