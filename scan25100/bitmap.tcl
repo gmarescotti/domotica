@@ -275,13 +275,13 @@ proc riempi_reg {} {
    global reg
    while { [ go_next_reg ] } {
       set title [get_next]
-      if { [ scan [ get_next ] "Address: %2xh Value: %4xh" address vdefault ] != 2 } {
+      if { [ scan [ get_next ] "Address: %2xh Value: %4xh" address default ] != 2 } {
          error "$str"
       }
    
       set reg($address) $title
-      set reg($address,vdefault) $vdefault
-      set reg($address,value) "????"
+      set reg($address,default) $default
+      set reg($address,value) "0000"
    
       # D15-D0 16'd0 Tser Lower RO Lower 16 Tser DCM bits. Tser is defined as the serializer delay.
       # D6-D2 Reserved - Reserved for future use. Returns undefined value when read.
@@ -291,14 +291,14 @@ proc riempi_reg {} {
 
          if { [ string index $str 0 ] == "D" } {
 
-            if { [ regexp {(\S*) (\S*) (.*) (RO|RW|RC|WC|-)( (.*)|)} $str {} range def name access {} descr ] != "1" } {
+            if { [ regexp {(\S*) (\S*) (.*) (RO|RW|RC|WC|-)( (.*)|)} $str {} range default name access {} descr ] != "1" } {
                error $str
             }
 
 	    set reg($address,bit,$range) $str
 	    set reg($address,bit,$range,range) $range
-	    set reg($address,bit,$range,def) [ get_bit_default $def ]
-	    set reg($address,bit,$range,defx) [ get_hex_default $def ]
+	    set reg($address,bit,$range,default) [ get_bin_default $default ]
+	    set reg($address,bit,$range,defaultx) [ get_hex_default $default ]
 
 	    set reg($address,bit,$range,name) $name
 	    set reg($address,bit,$range,access) $access
@@ -318,6 +318,7 @@ proc get_bit_range { str D1_ref D0_ref } {
    if { [ regexp {D(\w*)(-D(\w*)|)} $str {} D1 {} D0 ] != "1" } {
       error ,,,$str,,,
    }
+   if { $D0 == "" } { set D0 $D1 }
    return [ list $D1 $D0 ]
 }
 
@@ -327,9 +328,9 @@ proc int2bin { i } {
    return $x
 }
 
-proc hex2bin { i } {
+proc hex2bin { i { numofbits 16 } } {
    binary scan [binary format H4 [ format %.4x 0x$i ] ] B* x
-   return $x
+   return [ string range $x [ expr 16 - $numofbits ] end ]
 }
 
 proc bin2int { i } {
@@ -339,7 +340,7 @@ proc bin2int { i } {
    return [ expr $x & 0xFFFF ]
 }
 
-proc get_bit_default { str_def } {
+proc get_bin_default { str_def } {
    # 7'd0 1'b0 16'd0 2'b11 10'h283
    if { [ regexp {(\w*)'(d|b|h)(\w*)} $str_def {} numero_bits base valore ] != "1" } {
       error $str_def
@@ -366,68 +367,70 @@ proc get_bit_default { str_def } {
    return $bitdef
 }
 
-proc get_hex_default { str_def } {
-   set bitdef [ get_bit_default $str_def ]
-   set bitdef [ scan $bitdef %d ] ;# CANCELLA GLI 0 DAVANTI
+proc bin2hex { i } {
+   set bitdef [ scan $i %d ] ;# CANCELLA GLI 0 DAVANTI
    set bitdef [ format %.16d $bitdef ] ;# AGGIUNGE ZERO DAVANTI
    return [ format %x [ bin2int $bitdef ] ]
 }
 
+proc get_hex_default { str_def } {
+   set bitdef [ get_bin_default $str_def ]
+   return [ bin2hex $bitdef ]
+}
+
 ########################################################################
-proc check_reg_defaults { address } {
+proc change_bits { bitvar_ref bitrange bitvalue } {
+   upvar $bitvar_ref bitvar
+   get_bit_range $bitrange D1 D0
+
+   set numofbits [ expr $D1 - $D0 + 1 ]
+
+   if { $numofbits != [ string length $bitvalue ] } {
+      error "LUNGHEZZA ERRATA($bitrange) $numofbits != $bitvalue"
+   }
+
+   set bitvar [ string replace $bitvar end-$D1 end-$D0 $bitvalue ]
+}
+
+########################################################################
+proc check_reg_default { address } {
    global reg
    
    # puts "ADDRESS: $address"
    set address_default "----------------"
    foreach keyrange [ array names reg -regexp "^$address,bit,\[^,\]*$" ] {
-      get_bit_range $reg($keyrange,range) D1 D0
-      if { $D0 == "" } { set D0 $D1 }
-
-      set numofbits [ expr $D1 - $D0 + 1 ]
-      ## get_bit_default $reg($keyrange,def) $numofbits bitdef
-
-      if { $numofbits != [ string length $reg($keyrange,def) ] } {
-         error "$str_def,,, $numero_bits != $numero_bits"
-      }
-
-      set address_default [ string replace $address_default end-$D1 end-$D0 $reg($keyrange,def) ]
+      change_bits address_default $reg($keyrange,range) $reg($keyrange,default)
    }
-   if [ expr [ bin2int $address_default ] != $reg($address,vdefault) ] {
-      error "$address: $address_default != [ format %x $reg($address,vdefault) ]"
+   if [ expr [ bin2int $address_default ] != $reg($address,default) ] {
+      error "$address: $address_default != [ format %x $reg($address,default) ]"
    }
 }
 
 ########################################################################
-riempi_reg
-
-###############################
-foreach address [ array names reg -regexp {^[^,]+$} ] {
-   check_reg_defaults $address
-}
- 
-###############################
-lappend argv -nostandalone
-source com.tcl
-
-###############################
-trace add variable reg { write } reg_callback
-
 proc reg_callback { ar_ref index op } {
    upvar $ar_ref ar
-   puts "$ar_ref ($index) -> $ar($index)"
+   # puts "$ar_ref ($index) -> $ar($index)"
 
-   if { [ regexp {(\w*),} $index {} address ] != "1" } {
+   if { [ regexp {(\w*),(.*)} $index {} address index ] != "1" } {
       puts "WRONG $index!"
       return -1
    }
 
-   switch -regexp -- $index {
-      "^$address,value$" {
+   switch -glob -- $index {
+      "value" {
          # set reg($address,value) 
-	 puts "ADDRESS AND VALUE with address $address"
+	 puts "ADDRESS $address: $ar($address,$index) ([ hex2bin $ar($address,$index) ])"
       }
-      "^$address,bit,[^,]*,value$" {
-	 puts "BITRANGE MNODIFIED with address $address"
+      "bit,[D0-9\-]*,value" {
+	 regexp {bit,([D0-9\-]*),value} $index {} bitrange
+	 puts "ADDRESS $address,$bitrange: $ar($address,$index)"
+
+	 set bitvar [ hex2bin $ar($address,value) ]
+	 set bitvalue [ hex2bin $ar($address,$index) [ string length $ar($address,bit,$bitrange,default) ] ]
+
+	 change_bits bitvar $bitrange $bitvalue
+
+	 set ar($address,value) [ bin2hex $bitvar ]
       }
       default {
 	 puts "WRONG index $index with address $address"
@@ -435,5 +438,23 @@ proc reg_callback { ar_ref index op } {
    }
 }
 
-###############################
+##############################################################
+proc check_allregisters_defaults {} {
+   foreach address [ array names reg -regexp {^[^,]+$} ] {
+      check_reg_default $address
+   }
+   puts "CHECK DEFAULTS...OK"
+}
+
+##############################################################
+riempi_reg
+
+check_allregisters_defaults
+
+# LOAD COMMUNICATION FEATURES WITH SPARTAN3
+lappend argv -nostandalone ;# Skip away menu loop
+source com.tcl
+
+#################################################
+trace add variable reg { write } reg_callback
 

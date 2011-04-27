@@ -1,4 +1,4 @@
-#!/usr/bin/wish
+#!/usr/bin/tclsh
 
 global reg
 
@@ -21,9 +21,10 @@ source bitmap.tcl
 
 # source GUI/main.tcl
 
-parray reg
+# parray reg
 set reg(2,value) 21
-set reg(3,bit,D12,value) 999
+set reg(3,bit,D9-D4,value) 3F
+set reg(9,bit,D15-D11,value) 1E
 
 # vwait ar
 # exit
