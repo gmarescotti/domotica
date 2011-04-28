@@ -118,7 +118,7 @@ proc init { args } {
       puts "OPENED ttyUSB0: $tb!"
    } else {
       # set tb [ open "| ./main_tb 2>log.txt" r+ ]
-      set tb [ open "| ./main_tb 2> /dev/stderr" r+ ]
+      set tb [ open "| ../testbenches/main_tb 2> /dev/stderr" r+ ]
       ## set tb [ open "| ./main_tb" r+ ]
       # set tb [ open "| ./prova.sh" r+ ]
       fconfigure $tb -translation binary -buffering line ;#  line none all
@@ -312,9 +312,5 @@ proc mdio { op args } {
 }
 
 #######################################################
-if { [ lsearch "$argv" "-nostandalone" ] == -1 } {
-   source com_menus.tcl
-}
-
-}
+} ;# NAMESPACE COM...
 

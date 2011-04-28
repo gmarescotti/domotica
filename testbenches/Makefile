@@ -1,4 +1,4 @@
-TGT=mdio
+TGT=main
 TARGETS= $(TGT)_tb
 
 # TARGETS = pseudo_uart

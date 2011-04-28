@@ -1,5 +1,6 @@
 #!/usr/bin/tclsh
 
+source com.tcl
 #######################################################
 
 proc test_mdio { { code "" } } {
@@ -126,7 +127,7 @@ puts "Running standalone"
 set verbose false
 # set verbose true
 
-init
+com::init
 
 manage_menu "root" $menu_items
 

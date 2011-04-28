@@ -45,11 +45,17 @@ ARCHITECTURE behavior OF main_tb IS
 
 	  -- SERDES MDIO SERIAL
 	  mdio_sda    : inout std_logic := 'Z';
-	  mdio_scl    : out std_logic;
+	  mdio_scl    : buffer std_logic;
 
 	  -- SERDES CLK_REF
 	  clkref_serdes_p: out std_logic;
 	  clkref_serdes_n: out std_logic;
+
+          rxclk		: in std_logic;
+	  rout		: in std_logic_vector(9 downto 0);
+
+          txclk		: out std_logic;
+	  din		: out std_logic_vector(9 downto 0);	  
 
 	  -- PLASMA CPU PINS
 	  clk_in      : in std_logic;
@@ -104,6 +110,9 @@ ARCHITECTURE behavior OF main_tb IS
    signal mdio_slave_opcode : std_logic_vector(1 downto 0);
    signal mdio_slave_addr    : std_logic_vector(4 downto 0);
    signal mdio_slave_devaddr : std_logic_vector(4 downto 0);
+
+   signal rxclk : std_logic := '0';
+   signal rout  : std_logic_vector(9 downto 0) := (OTHERS => '0');
 BEGIN
 
    -- i2c_scl <= mod_def(1);
@@ -134,13 +143,17 @@ BEGIN
           clk_in 	=> clk_in,
           reset 	=> reset,
           uart_read 	=> uart_read,
-          uart_write 	=> uart_write
+          uart_write 	=> uart_write,
+
+          rxclk => rxclk,
+          rout => rout
         );
 
    -- SERDES-TESTER: MDIO serial slave
    t1 : mdio_slave
    port map(
       reset 		=> reset,
+      clk_in            => clk_in,
       serial_clock 	=> mdio_scl,
       serial_data 	=> mdio_sda,
       data_read_back 	=> mdio_slave_data_read_back,

@@ -2552,7 +2552,7 @@ global widget
 
 global mappa
 
-foreach addr [ lsort -dictionary [ array names mappa -regexp {^[^,]+$} ] ] {
+foreach addr [ lsort -dictionary [ array names mappa -regexp {^[0-9]+$} ] ] {
    lappend ::list_addrs "$addr: $mappa($addr)"
 }
 
@@ -2627,7 +2627,7 @@ global mappa
 
 $widget(register_list) delete 0 end
 
-foreach key [ array names mappa -regexp {^[^,]+$} ] {
+foreach key [ array names mappa -regexp {^[0-9]+$} ] {
    $widget(register_list) insert end [ list "$key" [ format %.4X $mappa($key,default) ] [ format %.4X $mappa($key,value) ] "$mappa($key)" ]
 }
 }
@@ -2685,7 +2685,7 @@ proc vTclWindow.top60 {base} {
     vTcl:toplevel $top -class Toplevel \
         -highlightcolor black 
     wm focusmodel $top passive
-    wm geometry $top 607x708+356+240; update
+    wm geometry $top 607x712+356+240; update
     wm maxsize $top 1425 870
     wm minsize $top 1 1
     wm overrideredirect $top 0

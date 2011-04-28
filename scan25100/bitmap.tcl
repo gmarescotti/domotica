@@ -275,11 +275,13 @@ proc go_next_reg {} {
 
 proc riempi_reg { reg_ref } {
    upvar $reg_ref reg
+   set reg(last_address) -1
    while { [ go_next_reg ] } {
       set title [get_next]
       if { [ scan [ get_next ] "Address: %2xh Value: %4xh" address default ] != 2 } {
          error "$str"
       }
+      if { $reg(last_address) < $address } { set reg(last_address) $address }
 
       set reg($address) $title
       set reg($address,default) $default
@@ -450,7 +452,7 @@ proc reg_callback { ar_ref index op } {
 ##############################################################
 proc check_allregisters_defaults { reg_ref } {
    upvar $reg_ref reg
-   foreach address [ array names reg -regexp {^[^,]+$} ] {
+   foreach address [ array names reg -regexp {^[0-9]+$} ] {
       check_reg_default $reg_ref $address
    }
    puts "CHECK DEFAULTS...OK"
