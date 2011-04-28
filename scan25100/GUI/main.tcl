@@ -2474,7 +2474,7 @@ proc vTcl:project:info {} {
         array set save {-anchor 1 -text 1}
     }
     namespace eval ::widgets::$site_7_0.02 {
-        array set save {-borderwidth 1 -cursor 1 -state 1 -textvariable 1 -width 1}
+        array set save {-borderwidth 1 -cursor 1 -relief 1 -state 1 -textvariable 1 -width 1}
     }
     namespace eval ::widgets::$site_6_0.cpd62 {
         array set save {-borderwidth 1 -height 1}
@@ -2499,6 +2499,13 @@ proc vTcl:project:info {} {
     set site_5_page2 [$base.tix64 subwidget [lindex [$base.tix64 pages] 1]]
     namespace eval ::widgets::$site_5_page2 {
         array set save {-height 1 -highlightcolor 1 -width 1}
+    }
+    set site_5_0 $site_5_page2
+    namespace eval ::widgets::$site_5_0.mcl66 {
+        array set save {-height 1}
+        namespace eval subOptions {
+            array set save {-label 1 -labelrelief 1 -width 1}
+        }
     }
     set site_5_page3 [$base.tix64 subwidget [lindex [$base.tix64 pages] 2]]
     namespace eval ::widgets::$site_5_page3 {
@@ -2525,6 +2532,7 @@ proc vTcl:project:info {} {
             init
             main
             fill_listbox
+            fill_register_list
         }
         set compounds {
         }
@@ -2548,11 +2556,13 @@ foreach addr [ lsort -dictionary [ array names mappa -regexp {^[^,]+$} ] ] {
    lappend ::list_addrs "$addr: $mappa($addr)"
 }
 
-# vTcl:DefineAlias "$site_6_0.cpd77" "MyAddrs" vTcl:WidgetProc "$top" 1
+#    vTcl:DefineAlias "$site_6_0.cpd77" "MyAddrs" vTcl:WidgetProc "$top" 1
 $widget(MyAddrs) subwidget listbox configure -listvariable ::list_addrs
 
 # fill_listbox
 $widget(MyAddrs) pick 0
+
+fill_register_list
 }
 #############################################################################
 ## Procedure:  fill_listbox
@@ -2593,7 +2603,11 @@ foreach key [ array names mappa -regexp "^$address,bit,\[^,\]+$" ] {
    set line ""
 
    foreach col { range defaultx name access description } {
-      lappend line $mappa($key,$col)
+      if { $col == "defaultx" } {
+         lappend line [ format %X $mappa($key,$col) ]
+      } else {
+         lappend line $mappa($key,$col)
+      }
    }
    $widget(mclistbox) insert end $line
    puts >>>>>>>>$line
@@ -2603,6 +2617,19 @@ foreach key [ array names mappa -regexp "^$address,bit,\[^,\]+$" ] {
 global address_value address_default
 set address_value [ format %.4X $mappa($address,value) ]
 set address_default [ format %.4X $mappa($address,default) ]
+}
+#############################################################################
+## Procedure:  fill_register_list
+
+proc ::fill_register_list {} {
+global widget
+global mappa
+
+$widget(register_list) delete 0 end
+
+foreach key [ array names mappa -regexp {^[^,]+$} ] {
+   $widget(register_list) insert end [ list "$key" [ format %.4X $mappa($key,default) ] [ format %.4X $mappa($key,value) ] "$mappa($key)" ]
+}
 }
 
 #############################################################################
@@ -2627,7 +2654,7 @@ proc vTclWindow. {base} {
     ###################
     wm focusmodel $top passive
     wm geometry $top 1x1+0+0; update
-    wm maxsize $top 1425 870
+    wm maxsize $top 1265 994
     wm minsize $top 1 1
     wm overrideredirect $top 0
     wm resizable $top 1 1
@@ -2658,7 +2685,7 @@ proc vTclWindow.top60 {base} {
     vTcl:toplevel $top -class Toplevel \
         -highlightcolor black 
     wm focusmodel $top passive
-    wm geometry $top 607x422+428+260; update
+    wm geometry $top 607x708+356+240; update
     wm maxsize $top 1425 870
     wm minsize $top 1 1
     wm overrideredirect $top 0
@@ -2675,7 +2702,7 @@ proc vTclWindow.top60 {base} {
     $top.tix64 add page1 \
         -anchor center -label bitmap 
     $top.tix64 add page2 \
-        -anchor center -label {Special command} 
+        -anchor center -label {All Registers} 
     $top.tix64 add page3 \
         -anchor center -label Info 
     set site_5_page1 [$top.tix64 subwidget [lindex [$top.tix64 pages] 0]]
@@ -2701,8 +2728,8 @@ fill_listbox } -dropdown 1 \
         -anchor w -text default: 
     vTcl:DefineAlias "$site_7_0.01" "Label2" vTcl:WidgetProc "$top" 1
     entry $site_7_0.02 \
-        -borderwidth 1 -cursor {} -state readonly \
-        -textvariable address_default -width 4 
+        -borderwidth 1 -cursor {} -relief flat -state readonly \
+        -textvariable address_default -width 5 
     vTcl:DefineAlias "$site_7_0.02" "Entry1" vTcl:WidgetProc "$top" 1
     pack $site_7_0.01 \
         -in $site_7_0 -anchor center -expand 0 -fill none -padx 2 -pady 2 \
@@ -2759,6 +2786,19 @@ fill_listbox } -dropdown 1 \
     pack $site_5_page1.fra66 \
         -in $site_5_page1 -anchor center -expand 1 -fill both -side top 
     set site_5_page2 [$top.tix64 subwidget [lindex [$top.tix64 pages] 1]]
+    ::mclistbox::mclistbox $site_5_page2.mcl66 \
+        -height 0 
+    vTcl:DefineAlias "$site_5_page2.mcl66" "register_list" vTcl:WidgetProc "$top" 1
+    $site_5_page2.mcl66 column add col1 \
+        -label Address -labelrelief raised -width 9 
+    $site_5_page2.mcl66 column add col2 \
+        -label Default -labelrelief raised -width 8 
+    $site_5_page2.mcl66 column add col3 \
+        -label Value -labelrelief raised -width 8 
+    $site_5_page2.mcl66 column add col4 \
+        -label Name -labelrelief raised -width 28 
+    pack $site_5_page2.mcl66 \
+        -in $site_5_page2 -anchor center -expand 1 -fill both -side top 
     set site_5_page3 [$top.tix64 subwidget [lindex [$top.tix64 pages] 2]]
     frame $top.cpd69 \
         -borderwidth 2 -relief groove -height 75 -width 125 

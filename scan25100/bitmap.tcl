@@ -280,7 +280,7 @@ proc riempi_reg { reg_ref } {
       if { [ scan [ get_next ] "Address: %2xh Value: %4xh" address default ] != 2 } {
          error "$str"
       }
-   
+
       set reg($address) $title
       set reg($address,default) $default
       set reg($address,value) "0000"
@@ -293,14 +293,14 @@ proc riempi_reg { reg_ref } {
 
          if { [ string index $str 0 ] == "D" } {
 
-            if { [ regexp {(\S*) (\S*) (.*) (RO|RW|RC|WC|-)( (.*)|)} $str {} range default name access {} descr ] != "1" } {
+            if { [ regexp {(\S*) (\S*) (.*) (RO|RW|RC|WC|-)( (.*)|)} $str {} range def_str name access {} descr ] != "1" } {
                error $str
             }
 
 	    set reg($address,bit,$range) $str
 	    set reg($address,bit,$range,range) $range
-	    set reg($address,bit,$range,default) [ get_bin_default $default ]
-	    set reg($address,bit,$range,defaultx) [ get_hex_default $default ]
+	    set reg($address,bit,$range,default) [ get_bin_default $def_str ]
+	    set reg($address,bit,$range,defaultx) [ get_hex_default $def_str ]
 
 	    set reg($address,bit,$range,name) $name
 	    set reg($address,bit,$range,access) $access
@@ -328,17 +328,20 @@ proc get_bit_range { str D1_ref D0_ref } {
 }
 
 ########################################################################
-proc int2bin { i } {
+proc int2bin { i { numofbits 16 } } {
+   set i [ expr $i ]
    binary scan [binary format S1 $i] B* x
-   return $x
-}
-
-proc hex2bin { i { numofbits 16 } } {
-   binary scan [binary format H4 [ format %.4x 0x$i ] ] B* x
    return [ string range $x [ expr 16 - $numofbits ] end ]
 }
 
+# proc hex2bin { i { numofbits 16 } } {
+#    binary scan [binary format H4 [ format %.4x 0x$i ] ] B* x
+#    return [ string range $x [ expr 16 - $numofbits ] end ]
+# }
+
 proc bin2int { i } {
+   set i [ format %016s $i ] ;# AGGIUNGE ZERO DAVANTI FINO A 16 CIFRE
+
    if { [ binary scan [binary format B* $i] S1 x ] != "1" } { 
       error "bin2int $i: ,,[binary format B* $i],,"
    }
@@ -361,7 +364,7 @@ proc get_bin_default { str_def } {
 	 set bitdef $valore
       }
       h {
-         set bitdef [ hex2bin $valore ]
+         set bitdef [ int2bin 0x$valore ]
          set bitdef [ string range $bitdef end-$numof_bits_1 end ]
       }
    }
@@ -372,17 +375,17 @@ proc get_bin_default { str_def } {
    return $bitdef
 }
 
-proc bin2hex { i } {
-   set bitdef [ string trimleft $i 0 ]
-   if { $bitdef == "" } { set bitdef 0 }
-   set bitdef [ format %016s $bitdef ] ;# AGGIUNGE ZERO DAVANTI
-
-   return [ format %x [ bin2int $bitdef ] ]
-}
+# proc bin2hex { i } {
+#    # set bitdef [ string trimleft $i 0 ]
+#    # if { $bitdef == "" } { set bitdef 0 }
+#    set bitdef [ format %016s $bitdef ] ;# AGGIUNGE ZERO DAVANTI FINO A 16 CIFRE
+# 
+#    return [ format %x [ bin2int $bitdef ] ]
+# }
 
 proc get_hex_default { str_def } {
    set bitdef [ get_bin_default $str_def ]
-   return [ bin2hex $bitdef ]
+   return [ bin2int $bitdef ]
 }
 
 ########################################################################
@@ -425,18 +428,18 @@ proc reg_callback { ar_ref index op } {
 
    switch -glob -- $index {
       "value" {
-	 puts "ADDRESS $address: $ar($address,$index) ([ hex2bin $ar($address,$index) ])"
+	 puts "ADDRESS $address: $ar($address,$index) ([ int2bin $ar($address,$index) ])"
       }
       "bit,[D0-9\-]*,value" {
 	 regexp {bit,([D0-9\-]*),value} $index {} bitrange
 	 puts "ADDRESS $address,$bitrange: $ar($address,$index)"
 
-	 set bitvar [ hex2bin $ar($address,value) ]
-	 set bitvalue [ hex2bin $ar($address,$index) [ string length $ar($address,bit,$bitrange,default) ] ]
+	 set bitvar [ int2bin $ar($address,value) ]
+	 set bitvalue [ int2bin $ar($address,$index) [ string length $ar($address,bit,$bitrange,default) ] ]
 
 	 change_bits bitvar $bitrange $bitvalue
 
-	 set ar($address,value) [ bin2hex $bitvar ]
+	 set ar($address,value) [ bin2int $bitvar ]
       }
       default {
 	 puts "WRONG index $index with address $address"
