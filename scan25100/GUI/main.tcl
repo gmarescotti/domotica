@@ -2461,7 +2461,7 @@ proc vTcl:project:info {} {
     }
     set site_6_0 $site_5_0.fra76
     namespace eval ::widgets::$site_6_0.cpd77 {
-        array set save {-arrowbitmap 1 -command 1 -crossbitmap 1 -disabledforeground 1 -dropdown 1 -editable 1 -fancy 1 -highlightbackground 1 -history 1 -label 1 -prunehistory 1 -relief 1 -tickbitmap 1}
+        array set save {-arrowbitmap 1 -command 1 -crossbitmap 1 -disabledforeground 1 -dropdown 1 -editable 1 -fancy 1 -highlightbackground 1 -history 1 -label 1 -prunehistory 1 -relief 1 -tickbitmap 1 -variable 1}
     }
     namespace eval ::widgets::$site_6_0.cpd78 {
         array set save {-borderwidth 1 -relief 1 -text 1 -width 1}
@@ -2486,12 +2486,18 @@ proc vTcl:project:info {} {
     namespace eval ::widgets::$site_7_0.02 {
         array set save {-borderwidth 1 -cursor 1 -state 1 -textvariable 1 -width 1}
     }
+    namespace eval ::widgets::$site_6_0.but66 {
+        array set save {-borderwidth 1 -command 1 -text 1}
+    }
+    namespace eval ::widgets::$site_6_0.ent67 {
+        array set save {-background 1 -insertbackground 1 -textvariable 1 -width 1}
+    }
     namespace eval ::widgets::$site_5_0.fra66 {
         array set save {-height 1 -width 1}
     }
     set site_6_0 $site_5_0.fra66
     namespace eval ::widgets::$site_6_0.mcl66 {
-        array set save {-fillcolumn 1 -height 1}
+        array set save {-fillcolumn 1 -height 1 -selectcommand 1}
         namespace eval subOptions {
             array set save {-label 1 -labelrelief 1 -resizable 1 -width 1}
         }
@@ -2533,6 +2539,8 @@ proc vTcl:project:info {} {
             main
             fill_listbox
             fill_register_list
+            map_selected
+            gui_change_bitvalue
         }
         set compounds {
         }
@@ -2563,6 +2571,7 @@ $widget(MyAddrs) subwidget listbox configure -listvariable ::list_addrs
 $widget(MyAddrs) pick 0
 
 fill_register_list
+
 }
 #############################################################################
 ## Procedure:  fill_listbox
@@ -2631,6 +2640,55 @@ foreach key [ array names mappa -regexp {^[0-9]+$} ] {
    $widget(register_list) insert end [ list "$key" [ format %.4X $mappa($key,default) ] [ format %.4X $mappa($key,value) ] "$mappa($key)" ]
 }
 }
+#############################################################################
+## Procedure:  map_selected
+
+proc ::map_selected {args} {
+global widget
+global mappa
+
+global current_bitvalue
+
+if { $args == "" } return
+
+set value [ lindex [ $widget(mclistbox) get $args ] 2 ]
+
+# trace remove variable ::current_bitvalue { write } ::gui_change_bitvalue
+set current_bitvalue $value
+# trace add variable ::current_bitvalue { write } ::gui_change_bitvalue
+}
+#############################################################################
+## Procedure:  gui_change_bitvalue
+
+proc ::gui_change_bitvalue {} {
+global widget
+global mappa
+global current_address
+global current_bitvalue
+
+if { $current_bitvalue == "" } { return }
+
+scan $current_address %d address
+
+set selected [ $widget(mclistbox) curselection ]
+if { $selected == "" } {
+   tk_messageBox -message "Select a range..."
+   return
+}
+
+puts "SELECTED: $selected"
+
+set range [ lindex [ $widget(mclistbox) get $selected ] 0 ]
+
+if { $mappa($address,bit,$range,value) == $current_bitvalue } {
+   puts "VALUE UNCHANGED: $current_bitvalue"
+   return
+}
+   
+set mappa($address,bit,$range,value) "$current_bitvalue"
+
+puts "OOOKK>>>$current_bitvalue"
+}
 
 #############################################################################
 ## Initialization Procedure:  init
@@ -2659,7 +2717,7 @@ proc vTclWindow. {base} {
     wm overrideredirect $top 0
     wm resizable $top 1 1
     wm withdraw $top
-    wm title $top "vtcl.tcl #2"
+    wm title $top "vtcl.tcl"
     bindtags $top "$top Vtcl.tcl all"
     vTcl:FireEvent $top <<Create>>
     wm protocol $top WM_DELETE_WINDOW "vTcl:FireEvent $top <<DeleteWindow>>"
@@ -2685,7 +2743,7 @@ proc vTclWindow.top60 {base} {
     vTcl:toplevel $top -class Toplevel \
         -highlightcolor black 
     wm focusmodel $top passive
-    wm geometry $top 607x712+371+170; update
+    wm geometry $top 607x712+356+214; update
     wm maxsize $top 1425 870
     wm minsize $top 1 1
     wm overrideredirect $top 0
@@ -2711,10 +2769,8 @@ proc vTclWindow.top60 {base} {
     vTcl:DefineAlias "$site_5_page1.fra76" "Frame3" vTcl:WidgetProc "$top" 1
     set site_6_0 $site_5_page1.fra76
     tixComboBox $site_6_0.cpd77 \
-        -command {global widget
-global mappa
-fill_listbox } -dropdown 1 \
-        -editable 0 -fancy 0 -history 0 -prunehistory 1 -label Address \
+        -command fill_listbox -dropdown 1 -editable 0 -fancy 0 -history 0 \
+        -prunehistory 1 -variable current_address -label Address \
         -relief ridge 
     vTcl:DefineAlias "$site_6_0.cpd77" "MyAddrs" vTcl:WidgetProc "$top" 1
     button $site_6_0.cpd78 \
@@ -2754,14 +2810,25 @@ fill_listbox } -dropdown 1 \
     pack $site_7_0.02 \
         -in $site_7_0 -anchor center -expand 1 -fill x -padx 2 -pady 2 \
         -side right 
+    button $site_6_0.but66 \
+        -borderwidth 1 -command gui_change_bitvalue -text set 
+    vTcl:DefineAlias "$site_6_0.but66" "Button4" vTcl:WidgetProc "$top" 1
+    entry $site_6_0.ent67 \
+        -background white -insertbackground black \
+        -textvariable current_bitvalue -width 5 
+    vTcl:DefineAlias "$site_6_0.ent67" "Entry3" vTcl:WidgetProc "$top" 1
     pack $site_6_0.cpd77 \
         -in $site_6_0 -anchor center -expand 0 -fill none -side left 
     pack $site_6_0.cpd78 \
         -in $site_6_0 -anchor e -expand 0 -fill none -side left 
     pack $site_6_0.cpd61 \
-        -in $site_6_0 -anchor center -expand 0 -fill none -side left 
+        -in $site_6_0 -anchor w -expand 0 -fill none -side left 
     pack $site_6_0.cpd62 \
-        -in $site_6_0 -anchor center -expand 0 -fill none -side left 
+        -in $site_6_0 -anchor w -expand 0 -fill none -side left 
+    pack $site_6_0.but66 \
+        -in $site_6_0 -anchor center -expand 0 -fill y -side left 
+    pack $site_6_0.ent67 \
+        -in $site_6_0 -anchor w -expand 0 -fill none -side left 
     pack $site_5_page1.fra76 \
         -in $site_5_page1 -anchor center -expand 0 -fill x -side top 
     frame $site_5_page1.fra66 \
@@ -2769,7 +2836,7 @@ fill_listbox } -dropdown 1 \
     vTcl:DefineAlias "$site_5_page1.fra66" "bitmap" vTcl:WidgetProc "$top" 1
     set site_6_0 $site_5_page1.fra66
     ::mclistbox::mclistbox $site_6_0.mcl66 \
-        -fillcolumn ye -height 0 
+        -fillcolumn ye -height 0 -selectcommand map_selected 
     vTcl:DefineAlias "$site_6_0.mcl66" "mclistbox" vTcl:WidgetProc "$top" 1
     $site_6_0.mcl66 column add col1 \
         -label Bit -labelrelief raised -resizable 0 -width 8 
