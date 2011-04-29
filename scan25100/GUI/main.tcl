@@ -2441,7 +2441,7 @@ if {[info exists vTcl(sourcing)]} {
 proc vTcl:project:info {} {
     set base .top60
     namespace eval ::widgets::$base {
-        set set,origin 1
+        set set,origin 0
         set set,size 1
         set runvisible 1
     }
@@ -2493,11 +2493,11 @@ proc vTcl:project:info {} {
         array set save {-background 1 -insertbackground 1 -textvariable 1 -width 1}
     }
     namespace eval ::widgets::$site_5_0.fra66 {
-        array set save {-height 1 -width 1}
+        array set save {}
     }
     set site_6_0 $site_5_0.fra66
     namespace eval ::widgets::$site_6_0.mcl66 {
-        array set save {-fillcolumn 1 -height 1 -selectcommand 1}
+        array set save {-borderwidth 1 -columnborderwidth 1 -columnrelief 1 -fillcolumn 1 -height 1 -selectcommand 1 -selectmode 1}
         namespace eval subOptions {
             array set save {-label 1 -labelrelief 1 -resizable 1 -width 1}
         }
@@ -2508,7 +2508,7 @@ proc vTcl:project:info {} {
     }
     set site_5_0 $site_5_page2
     namespace eval ::widgets::$site_5_0.mcl66 {
-        array set save {-height 1}
+        array set save {-setgrid 1 -width 1}
         namespace eval subOptions {
             array set save {-label 1 -labelrelief 1 -width 1}
         }
@@ -2571,20 +2571,20 @@ $widget(MyAddrs) subwidget listbox configure -listvariable ::list_addrs
 $widget(MyAddrs) pick 0
 
 fill_register_list
-
 }
 #############################################################################
 ## Procedure:  fill_listbox
 
-proc ::fill_listbox {address} {
+proc ::fill_listbox {args} {
 global widget
 
 # Array con tutte le info sui registri scan25100 serdes National
 global mappa
 
+if { $::current_address == "" } return
 # "scan string format ?varName varName ...?"
 # set address [ $widget(MyAddrs) subwidget listbox curselection ]
-scan $address %d address
+scan $::current_address %d address
 
 if ![ info exists mappa($address) ] {
    tk_messageBox -message "WRONG address: $address"
@@ -2639,6 +2639,8 @@ $widget(register_list) delete 0 end
 foreach key [ array names mappa -regexp {^[0-9]+$} ] {
    $widget(register_list) insert end [ list "$key" [ format %.4X $mappa($key,default) ] [ format %.4X $mappa($key,value) ] "$mappa($key)" ]
 }
+
+fill_listbox
 }
 #############################################################################
 ## Procedure:  map_selected
@@ -2688,6 +2690,8 @@ if { $mappa($address,bit,$range,value) == $current_bitvalue } {
 set mappa($address,bit,$range,value) "$current_bitvalue"
 
 puts "OOOKK>>>$current_bitvalue"
+
+fill_listbox
 }
 
 #############################################################################
@@ -2743,7 +2747,8 @@ proc vTclWindow.top60 {base} {
     vTcl:toplevel $top -class Toplevel \
         -highlightcolor black 
     wm focusmodel $top passive
-    wm geometry $top 607x712+356+214; update
+    wm geometry $top 21x31; update
+    wm grid $top 20 10 7 17
     wm maxsize $top 1425 870
     wm minsize $top 1 1
     wm overrideredirect $top 0
@@ -2755,7 +2760,7 @@ proc vTclWindow.top60 {base} {
     wm protocol $top WM_DELETE_WINDOW "vTcl:FireEvent $top <<DeleteWindow>>"
 
     tixNoteBook $top.tix64 \
-        -highlightbackground #d9d9d9 
+        -highlightbackground #d9d9d9
     vTcl:DefineAlias "$top.tix64" "TixNoteBook1" vTcl:WidgetProc "$top" 1
     $top.tix64 add page1 \
         -anchor center -label bitmap 
@@ -2831,12 +2836,13 @@ proc vTclWindow.top60 {base} {
         -in $site_6_0 -anchor w -expand 0 -fill none -side left 
     pack $site_5_page1.fra76 \
         -in $site_5_page1 -anchor center -expand 0 -fill x -side top 
-    frame $site_5_page1.fra66 \
-        -height 75 -width 125 
+    frame $site_5_page1.fra66
     vTcl:DefineAlias "$site_5_page1.fra66" "bitmap" vTcl:WidgetProc "$top" 1
     set site_6_0 $site_5_page1.fra66
     ::mclistbox::mclistbox $site_6_0.mcl66 \
-        -fillcolumn ye -height 0 -selectcommand map_selected 
+        -borderwidth 1 -columnborderwidth 1 -columnrelief raised \
+        -fillcolumn ye -height 0 -selectcommand map_selected \
+        -selectmode single 
     vTcl:DefineAlias "$site_6_0.mcl66" "mclistbox" vTcl:WidgetProc "$top" 1
     $site_6_0.mcl66 column add col1 \
         -label Bit -labelrelief raised -resizable 0 -width 8 
@@ -2856,7 +2862,7 @@ proc vTclWindow.top60 {base} {
         -in $site_5_page1 -anchor center -expand 1 -fill both -side top 
     set site_5_page2 [$top.tix64 subwidget [lindex [$top.tix64 pages] 1]]
     ::mclistbox::mclistbox $site_5_page2.mcl66 \
-        -height 0 
+        -setgrid 1 -width 10 
     vTcl:DefineAlias "$site_5_page2.mcl66" "register_list" vTcl:WidgetProc "$top" 1
     $site_5_page2.mcl66 column add col1 \
         -label Address -labelrelief raised -width 9 
