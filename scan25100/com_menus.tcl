@@ -96,8 +96,8 @@ proc test_i2c {} {
 set menu_items {
    {"test mdio" test_mdio}
    {"test i2c" test_i2c}
-   {"test clocks" test_clocks}
-   {"test codes" test_codes}
+   {"test clocks" com::test_clocks}
+   {"test codes" com::test_codes}
 }
 
 proc manage_menu { prompt menu_items } {
@@ -124,15 +124,10 @@ proc manage_menu { prompt menu_items } {
 ################################################
 puts "Running standalone"
 
-set verbose false
-# set verbose true
-
 com::init
 
 manage_menu "root" $menu_items
 
 puts "END OF FILE"
 
-if [ catch "close $tb" err ] {
-   puts "ERROR Closing: $err"
-}
+com::close

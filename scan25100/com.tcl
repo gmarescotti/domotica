@@ -116,6 +116,9 @@ proc init { args } {
       # fconfigure $tb -mode 57600,n,8,1 -handshake none -translation binary -blocking 1
       fconfigure $tb -mode 57600,n,8,1 -handshake none -translation binary -buffering none -blocking true
       puts "OPENED ttyUSB0: $tb!"
+   } elseif { [ lsearch "$argv" "-sim" ] >= 0 } {
+      set tb [ open "| ./com_slave.tcl" r+ ]
+      fconfigure $tb -translation binary -buffering line ;#  line none all
    } else {
       # set tb [ open "| ./main_tb 2>log.txt" r+ ]
       set tb [ open "| ../testbenches/main_tb 2> /dev/stderr" r+ ]
@@ -267,12 +270,13 @@ proc splitta_2x { num } {
 
 variable mdio_address 0
 proc mdio { op args } {
+   variable mdio_address
    # invia false [ ascii "c" ] $opcode "$data4>>8" "$data4&0xFF"
    # invia false 0x62 0x61 :# invio dato in MDIO
    switch -exact -- $op {
       "write_address" {
          eval invia 0x62 0x61 [ splitta_2x $args ]
-	 set mdio_address $address
+	 set mdio_address $args
       }
       "write_data" {
          eval invia 0x62 0x62 [ splitta_2x $args ]
@@ -310,6 +314,16 @@ proc mdio { op args } {
       return [ ricevi 0x62 true ] ;# TRUE
    }
 }
+
+proc close {} {
+   variable tb
+   if [ catch "::close $tb" err ] {
+      puts "ERROR Closing: $err"
+   }
+}
+
+set verbose false
+# set verbose true
 
 #######################################################
 } ;# NAMESPACE COM...

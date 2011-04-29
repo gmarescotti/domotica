@@ -419,22 +419,79 @@ proc check_reg_default { reg_ref address } {
 }
 
 ########################################################################
+proc update_bits { reg_ref address value } {
+   upvar $reg_ref reg
+   
+   set binvalue [ int2bin $value ]
+
+   foreach keyrange [ array names reg -regexp "^$address,bit,\[^,\]*$" ] {
+      get_bit_range $reg($keyrange,range) D1 D0
+      set reg($keyrange,default) [ string range $binvalue end-$D1 end-$D0 ]
+      set reg($keyrange,defaultx) [ bin2int $reg($keyrange,default) ]
+   }
+}
+
+########################################################################
+proc trace_enable { reg_ref op } {
+   upvar $reg_ref reg
+   if $op {
+      trace add variable reg { write } ::bitmap::reg_callback
+   } else {
+      trace remove variable reg { write } ::bitmap::reg_callback
+   }
+}
+
+########################################################################
+proc register_write_callback { mycallback } {
+   variable write_callback $mycallback
+}
+
+proc register_read_callback { mycallback } {
+   variable read_callback $mycallback
+}
+
 proc reg_callback { ar_ref index op } {
+   variable write_callback
+   variable read_callback
    upvar $ar_ref ar
    # puts "$ar_ref ($index) -> $ar($index)"
 
-   if { [ regexp {(\w*),(.*)} $index {} address index ] != "1" } {
+   if { [ regexp {^([^,]+),(.*)} $index {} address index ] != "1" } {
       puts "WRONG $index!"
       return -1
    }
 
    switch -glob -- $index {
       "value" {
-	 puts "ADDRESS $address: $ar($address,$index) ([ int2bin $ar($address,$index) ])"
+	 # puts "ADDRESS $address: $ar($address,$index) ([ int2bin $ar($address,$index) ])"
+	 if { $ar($address,value) == "toberead" } {
+	    if [ info exists read_callback ] {
+	       if { $address == "-1" } {
+
+	          $read_callback 0
+
+                  for { set i 1 } { $i <= $ar(last_address) } { incr i } {
+	             $read_callback -1
+                  }
+		  return
+	       }
+	       trace_enable ar 0
+	       $read_callback $address
+	       updates_bits $address $ar($address,value)
+	       trace_enable ar 1
+	    }
+	 }  else {
+	    if [ info exists write_callback ] {
+	       $write_callback $address $ar($address,value)
+	    }
+	    trace_enable ar 0
+	    update_bits ar $address $ar($address,value)
+	    trace_enable ar 1
+         }
       }
       "bit,[D0-9\-]*,value" {
 	 regexp {bit,([D0-9\-]*),value} $index {} bitrange
-	 puts "ADDRESS $address,$bitrange: $ar($address,$index)"
+	 # puts "ADDRESS $address,$bitrange: $ar($address,$index)"
 
 	 set bitvar [ int2bin $ar($address,value) ]
 	 set bitvalue [ int2bin $ar($address,$index) [ string length $ar($address,bit,$bitrange,default) ] ]

@@ -2516,7 +2516,7 @@ proc vTcl:project:info {} {
     }
     set site_3_0 $base.cpd69
     namespace eval ::widgets::$site_3_0.but70 {
-        array set save {-text 1 -width 1}
+        array set save {-command 1 -text 1 -width 1}
     }
     namespace eval ::widgets::$site_3_0.but71 {
         array set save {-command 1 -text 1 -width 1}
@@ -2654,7 +2654,7 @@ proc vTclWindow. {base} {
     ###################
     wm focusmodel $top passive
     wm geometry $top 1x1+0+0; update
-    wm maxsize $top 1265 994
+    wm maxsize $top 1425 870
     wm minsize $top 1 1
     wm overrideredirect $top 0
     wm resizable $top 1 1
@@ -2685,7 +2685,7 @@ proc vTclWindow.top60 {base} {
     vTcl:toplevel $top -class Toplevel \
         -highlightcolor black 
     wm focusmodel $top passive
-    wm geometry $top 607x712+356+240; update
+    wm geometry $top 607x712+438+159; update
     wm maxsize $top 1425 870
     wm minsize $top 1 1
     wm overrideredirect $top 0
@@ -2805,6 +2805,10 @@ fill_listbox } -dropdown 1 \
     vTcl:DefineAlias "$top.cpd69" "Frame2" vTcl:WidgetProc "$top" 1
     set site_3_0 $top.cpd69
     button $site_3_0.but70 \
+        -command {global mappa
+
+set mappa(-1,value) "toberead"
+fill_register_list} \
         -text {reload all} -width 8 
     vTcl:DefineAlias "$site_3_0.but70" "Button1" vTcl:WidgetProc "$top" 1
     button $site_3_0.but71 \
