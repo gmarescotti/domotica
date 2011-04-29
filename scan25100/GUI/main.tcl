@@ -2602,7 +2602,7 @@ $widget(mclistbox) delete 0 end
 foreach key [ array names mappa -regexp "^$address,bit,\[^,\]+$" ] {
    set line ""
 
-   foreach col { range defaultx name access description } {
+   foreach col { range defaultx value name access description } {
       if { $col == "defaultx" } {
          lappend line [ format %X $mappa($key,$col) ]
       } else {
@@ -2654,12 +2654,12 @@ proc vTclWindow. {base} {
     ###################
     wm focusmodel $top passive
     wm geometry $top 1x1+0+0; update
-    wm maxsize $top 1425 870
+    wm maxsize $top 1265 994
     wm minsize $top 1 1
     wm overrideredirect $top 0
     wm resizable $top 1 1
     wm withdraw $top
-    wm title $top "vtcl.tcl"
+    wm title $top "vtcl.tcl #2"
     bindtags $top "$top Vtcl.tcl all"
     vTcl:FireEvent $top <<Create>>
     wm protocol $top WM_DELETE_WINDOW "vTcl:FireEvent $top <<DeleteWindow>>"
@@ -2685,7 +2685,7 @@ proc vTclWindow.top60 {base} {
     vTcl:toplevel $top -class Toplevel \
         -highlightcolor black 
     wm focusmodel $top passive
-    wm geometry $top 607x712+438+159; update
+    wm geometry $top 607x712+371+170; update
     wm maxsize $top 1425 870
     wm minsize $top 1 1
     wm overrideredirect $top 0
@@ -2774,12 +2774,14 @@ fill_listbox } -dropdown 1 \
     $site_6_0.mcl66 column add col1 \
         -label Bit -labelrelief raised -resizable 0 -width 8 
     $site_6_0.mcl66 column add col2 \
-        -label Value -labelrelief raised -resizable 0 -width 7 
+        -label def -labelrelief raised -resizable 1 -width 7 
     $site_6_0.mcl66 column add col3 \
-        -label {Bit Name} -labelrelief raised -resizable 0 -width 15 
+        -label Value -labelrelief raised -resizable 0 -width 7 
     $site_6_0.mcl66 column add col4 \
-        -label Access -labelrelief raised -resizable 0 -width 7 
+        -label {Bit Name} -labelrelief raised -resizable 0 -width 15 
     $site_6_0.mcl66 column add col5 \
+        -label Access -labelrelief raised -resizable 0 -width 7 
+    $site_6_0.mcl66 column add col6 \
         -label Description -labelrelief raised -resizable 1 -width 50 
     pack $site_6_0.mcl66 \
         -in $site_6_0 -anchor center -expand 1 -fill both -side top 
@@ -2805,6 +2807,7 @@ fill_listbox } -dropdown 1 \
     vTcl:DefineAlias "$top.cpd69" "Frame2" vTcl:WidgetProc "$top" 1
     set site_3_0 $top.cpd69
     button $site_3_0.but70 \
+        \
         -command {global mappa
 
 set mappa(-1,value) "toberead"

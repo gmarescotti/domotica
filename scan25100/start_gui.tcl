@@ -19,11 +19,16 @@ proc reg_changed { address value } {
 
 proc reg_needed { address } {
    global mappa
-   if { $address == "-1" } {
-      set address $mappa(last_address)
-      set mappa($address,value) [ com::mdio read_inc ]
-      puts "READ-INC $address: 0x[ format %X $mappa($address,value) ]"
+   if { $address == "-2" } {
+      com::mdio write_address 0
       return
+   }
+   if { $address == "-1" } {
+      set address $com::mdio_address
+      set value [ com::mdio read_inc ]
+      set mappa($address,value) $value
+      puts "READ-INC $address: 0x[ format %X $value ]"
+      return $address
    }
    com::mdio write_address $address
    set mappa($address,value) [ com::mdio read ]
@@ -48,10 +53,12 @@ bitmap::register_read_callback "reg_needed"
 # set mappa(1,value) "toberead"
 # set mappa(2,value) "toberead"
 
-set mappa(-1,value) "toberead"
+# set mappa(-1,value) "toberead"
 
 # Launch GUI
-# source GUI/main.tcl
+source GUI/main.tcl
+
+# parray mappa
 
 # vwait ar
 # exit

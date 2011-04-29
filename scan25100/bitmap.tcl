@@ -426,8 +426,8 @@ proc update_bits { reg_ref address value } {
 
    foreach keyrange [ array names reg -regexp "^$address,bit,\[^,\]*$" ] {
       get_bit_range $reg($keyrange,range) D1 D0
-      set reg($keyrange,default) [ string range $binvalue end-$D1 end-$D0 ]
-      set reg($keyrange,defaultx) [ bin2int $reg($keyrange,default) ]
+      set binrange [ string range $binvalue end-$D1 end-$D0 ]
+      set reg($keyrange,value) [ bin2int $binrange ]
    }
 }
 
@@ -468,16 +468,19 @@ proc reg_callback { ar_ref index op } {
 	    if [ info exists read_callback ] {
 	       if { $address == "-1" } {
 
-	          $read_callback 0
+	          $read_callback -2 ;# SET ADDRESS TO 0
 
-                  for { set i 1 } { $i <= $ar(last_address) } { incr i } {
-	             $read_callback -1
+                  for { set i 0 } { $i <= $ar(last_address) } { incr i } {
+	             trace_enable ar 0
+	             set address [ $read_callback -1 ];# READINC
+	             update_bits ar $address $ar($address,value)
+	             trace_enable ar 1
                   }
 		  return
 	       }
 	       trace_enable ar 0
 	       $read_callback $address
-	       updates_bits $address $ar($address,value)
+	       update_bits ar $address $ar($address,value)
 	       trace_enable ar 1
 	    }
 	 }  else {
