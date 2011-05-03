@@ -128,8 +128,13 @@ package modules is
 	 clkref_serdes_p: out std_logic;
 	 clkref_serdes_n: out std_logic;
 
+	 sysclk_serdes_p: in std_logic;
+         sysclk_serdes_n: in std_logic;
+
          serial_clock : out std_logic;
          clkref_serdes: inout std_logic;
+
+         sysclk_serdes: out std_logic;
 
 	 -- PLASMA CPU PINS
 	 clk_in      : in std_logic
@@ -140,7 +145,8 @@ package modules is
       port(
          reset		 : in std_logic;
          clk_in		 : in std_logic;
-         clkref_serdes, rxclk_serdes, serial_clock : in std_logic;
+         clkref_serdes, rxclk_serdes, sysclk_serdes, serial_clock : in std_logic;
+
          hexint		 : out std_logic_vector(3 downto 0);
 
          uart_enable_read     : buffer std_logic;

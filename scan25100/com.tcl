@@ -207,7 +207,11 @@ proc test_clocks { } {
    # after 2000
    puts "SERIALCLOCK= [ ricevi 0x61 true ]"
 
-   invia 0x61 0x65 ;# SYSCLK
+   invia 0x61 0x65 ;# RXCLK
+   # after 2000
+   puts "RXCLK= [ ricevi 0x61 true ]"
+
+   invia 0x61 0x66 ;# SYSCLK
    # after 2000
    puts "SYSCLK= [ ricevi 0x61 true ]"
 }

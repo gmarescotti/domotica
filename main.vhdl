@@ -25,6 +25,7 @@ entity main is
 	  -- UTILITY
 	  led         : buffer std_logic_vector(7 downto 0);
 	  tasto       : in std_logic_vector(7 downto 0);
+	  push_button : in std_logic_vector(3 downto 0);
 	  digit_out   : out std_logic_vector(3 downto 0);
 	  seg_out     : out std_logic_vector(7 downto 0);
 
@@ -40,8 +41,8 @@ entity main is
 	  clkref_serdes_p: out std_logic;
 	  clkref_serdes_n: out std_logic;
 
---	  sysclk_serdes_p: in std_logic;
---	  sysclk_serdes_n: in std_logic;
+	  sysclk_serdes_p: in std_logic;
+	  sysclk_serdes_n: in std_logic;
 
           rxclk		: in std_logic;
 	  rout		: in std_logic_vector(9 downto 0);
@@ -62,7 +63,7 @@ architecture Behavioral of main is
 
    signal serial_clock 	: std_logic;
    signal clkref_serdes : std_logic;
-   -- signal sysclk_serdes : std_logic;
+   signal sysclk_serdes : std_logic;
 
    -- SIGNAL FOR UART
    signal uart_enable_read  : std_logic;
@@ -98,32 +99,56 @@ begin
    -- mdio_scl 	<= serial_clock;
 
    rate_select 	<= '0';
-   t_dis       	<= not tasto(0);
-   led(0) 	<= tasto(0);
-   led(1) 	<= los;
-   led(2)       <= mod_def(0);
-   led(7 downto 4) <= (OTHERS => '0');
-
-   led(3)       <= mdio_sda;
+   t_dis       	<= '0'; -- not tasto(0);
+   -- led(0) 	<= tasto(0);
+   -- led(1) 	<= los;
+   -- led(2)       <= mod_def(0);
+   -- led(7 downto 4) <= (OTHERS => '0');
+   -- led(3)       <= mdio_sda;
    
-   din(8) <= '0' when tasto(7) = '1' else 'Z'; -- DIN [8] is used as K-code select pin
-		-- When DIN [8] is low, DIN [0-7] is mapped to the
-		-- corresponding 10-bit D-group. When DIN [8] is high, DIN [0-7] is mapped to the
-		-- corresponding 10-bit K-group.
 
-   din(9) <= '0' when tasto(7) = '1' else 'Z'; -- and DIN[9] should be tied Low.
+   -- DIN [8] is used as K-code select pin
+   -- When DIN [8] is low, DIN [0-7] is mapped to the
+   -- corresponding 10-bit D-group. When DIN [8] is high, DIN [0-7] is mapped to the
+   -- corresponding 10-bit K-group.
+   -- and DIN[9] should be tied Low.
    
    -- ROUT [8] is the K-group indicator. A low at ROUT [8] indicates ROUT [0-7] belongs
    -- to the D-group, while a high indicates it belongs to the K-group. ROUT [9] is the line
    -- code violation (LCV) indicator. ROUT [9] is high for one ROUT cycle when a line code
    -- violation occurs.
+   din(9) <= '0';
+   din_8_10b: process(clkref_serdes) is
+   begin
+      if rising_edge(clkref_serdes) then
+         if push_button(0) = '0' then
+	    din(8) <= '0';
+            din(7 downto 0) <= tasto;
+	 else
+	    din(8) <= '1';
+            din(7 downto 0) <= "101" & "11100"; -- "11100" & "101"; -- K28.5
+	 end if;
+      end if;
+   end process;
 
-   -- din(7 downto 0) <= 'Z';
+   led(7 downto 2) <= rout(5 downto 0);
    
-   din(7 downto 0) <= rout(7 downto 0) when tasto(7) = '1' else (OTHERS => 'Z');
+   led(0) <= rout(8);
+   led(1) <= rout(9);
    
-   txclk <= rxclk when tasto(7) = '1' else 'Z';
+   txclk <= clkref_serdes when push_button(2) = '0' else 'Z';
 
+   -- DEBUG ROUT K-CODES
+   hexint(0) <= rout(3 downto 0) when rout(8) ='1' else x"0";
+   hexint(1) <= rout(7 downto 4) when rout(8) ='1' else x"0";
+
+   debug_tx: process (rout(9)) is
+   begin
+      if rising_edge(rout(9)) then
+         hexint(2) <= rout(3 downto 0);
+         hexint(3) <= rout(7 downto 4);
+      end if;
+   end process;
 
 --   -- ritardo il fronte di discesa di mdio_scl con monostabile
 --   clock_pro: process(clk_in) is
@@ -188,7 +213,7 @@ begin
  	    
             running_conversion => mdio_running_conversion,
             error_code         => mdio_error_code,
-            hexint 	       => hexint(2)
+            hexint 	       => open -- hexint(2)
        );
 
    -- SERDES SLAVE FOR TEST!!!: MDIO serial test slave interface
@@ -217,7 +242,7 @@ begin
  	    start_conversion 	=> i2c_start_conversion,
 	    is_running		=> i2c_is_running,
 	    error_code 		=> i2c_error_code,
-            hexint 		=> hexint(1)
+            hexint 		=> open -- hexint(1)
  	    );
 
     -- Genero tutti i clock del progetto
@@ -225,9 +250,9 @@ begin
    port map(
            reset => reset,
            clkref_serdes_p => clkref_serdes_p, clkref_serdes_n => clkref_serdes_n,
---           sysclk_serdes_p, sysclk_serdes_n,
+           sysclk_serdes_p => sysclk_serdes_p, sysclk_serdes_n => sysclk_serdes_n,
            serial_clock => serial_clock, clkref_serdes => clkref_serdes,
---	   sysclk_serdes,
+	   sysclk_serdes => sysclk_serdes,
            clk_in => clk_in
    );
 
@@ -238,11 +263,11 @@ begin
       port map(
          reset => reset,
          clk_in => clk_in, clkref_serdes => clkref_serdes, 
-	 -- sysclk_serdes => sysclk_serdes, 
+	 sysclk_serdes => sysclk_serdes, 
 	 serial_clock => serial_clock, -- CLOCKS
 	 rxclk_serdes => rxclk,
          
-	 hexint => hexint(0),
+	 hexint => open, -- hexint(0),
 
          uart_enable_read => uart_enable_read,
          uart_enable_write => uart_enable_write,

@@ -2612,11 +2612,13 @@ foreach key [ array names mappa -regexp "^$address,bit,\[^,\]+$" ] {
    set line ""
 
    foreach col { range defaultx value name access description } {
-      if { $col == "defaultx" } {
-         lappend line [ format %X $mappa($key,$col) ]
-      } else {
-         lappend line $mappa($key,$col)
+      if { "$col" == "defaultx" || "$col" == "value" } {
+	 if [ string is integer $mappa($key,$col) ] {
+            lappend line [ format %X $mappa($key,$col) ]
+	    continue
+	 }
       }
+      lappend line $mappa($key,$col)
    }
    $widget(mclistbox) insert end $line
    puts >>>>>>>>$line
@@ -2691,7 +2693,8 @@ set mappa($address,bit,$range,value) "$current_bitvalue"
 
 puts "OOOKK>>>$current_bitvalue"
 
-fill_listbox
+# fill_listbox
+fill_register_list
 }
 
 #############################################################################
@@ -2779,6 +2782,7 @@ proc vTclWindow.top60 {base} {
         -relief ridge 
     vTcl:DefineAlias "$site_6_0.cpd77" "MyAddrs" vTcl:WidgetProc "$top" 1
     button $site_6_0.cpd78 \
+    	-command {scan $current_address %d address; set mappa($address,value) "toberead"; fill_register_list} \
         -borderwidth 1 -relief ridge -text reload -width 8 
     vTcl:DefineAlias "$site_6_0.cpd78" "Button5" vTcl:WidgetProc "$top" 1
     frame $site_6_0.cpd61 \

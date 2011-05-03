@@ -11,6 +11,13 @@ NET "uart_read" LOC = "T13";
 NET "uart_write" LOC = "R13";
 
 ##########################################################
+## 4 Switch
+NET "push_button<0>" LOC="M13";
+NET "push_button<1>" LOC="M14";
+NET "push_button<2>" LOC="L13";
+NET "push_button<3>" LOC="L15";
+
+##########################################################
 ## A2 EXPANSION CONNECTOR
 ## SFP CONNECTION
 
@@ -48,11 +55,11 @@ NET "mod_def<0>"  LOC="C7" | PULLUP | IOSTANDARD = "LVTTL";
 # OLD NET "clkref_serdes_p" LOC = "A4" | IOSTANDARD = "LVDS_25"; # "LVDSEXT_25";
 # OLD NET "clkref_serdes_n" LOC = "B4" | IOSTANDARD = "LVDS_25"; # "LVDSEXT_25";
 
-NET "clkref_serdes_p" LOC = "B13" | IOSTANDARD = "LVDS_25"; # "LVDS_25"; # "LVDSEXT_25";
-NET "clkref_serdes_n" LOC = "A13" | IOSTANDARD = "LVDS_25"; # "LVDS_25"; # "LVDSEXT_25";
+NET "clkref_serdes_p" LOC = "B13" | IOSTANDARD = "LVDSEXT_25"; # "LVDS_25"; # "LVDSEXT_25";
+NET "clkref_serdes_n" LOC = "A13" | IOSTANDARD = "LVDSEXT_25"; # "LVDS_25"; # "LVDSEXT_25";
 
-#NET "sysclk_serdes_p" LOC = "D6" | IOSTANDARD = "LVDS_25"; # "LVDS_25"; # "LVDSEXT_25";
-#NET "sysclk_serdes_n" LOC = "E6" | IOSTANDARD = "LVDS_25"; # "LVDS_25"; # "LVDSEXT_25";
+NET "sysclk_serdes_p" LOC = "D6" | IOSTANDARD = "LVDS_25"; # "LVDS_25"; # "LVDSEXT_25";
+NET "sysclk_serdes_n" LOC = "E6" | IOSTANDARD = "LVDS_25"; # "LVDS_25"; # "LVDSEXT_25";
 
 ####  CLOCK E DATO SERIALI
 ## MDIO and MDC pins are 3.3V LVTTL compliant
@@ -70,6 +77,7 @@ NET "mdio_scl" LOC="C8" | IOSTANDARD = "LVTTL";
 
 # pin 52 -> B1:5 -> T3
 NET "rxclk" LOC="T3";
+NET "rxclk" CLOCK_DEDICATED_ROUTE = FALSE;
 # rout[0..9] -> pin 53..62 -> B1:(8  ,7  , 10 ,9  , 12 ,11 , 14 ,13, 16 ,15) 
 #                             -> (C11,N11, D11,P10, C12,R10, D12,T7, E11,R7)
 
@@ -84,8 +92,8 @@ NET "rout<7>" LOC="T7";
 NET "rout<8>" LOC="E11";
 NET "rout<9>" LOC="R7";
 
-# pin 64 -> B1:18 -> B16
-NET "txclk" LOC="B16";
+# pin 64 -> B1:17 -> N6
+NET "txclk" LOC="N6";
 
 # din[0-9] -> pin 65..74 -> B1:(20,19, 22 ,21,  24,23,   26,25,   28,27)
 #                           -> (R3,M6, C16,C15, D16,D15, E16,E15, G15,F15) 

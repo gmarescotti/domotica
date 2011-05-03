@@ -19,13 +19,13 @@ entity myclocks is
 	  clkref_serdes_p: out std_logic;
 	  clkref_serdes_n: out std_logic;
 
---	  sysclk_serdes_p: in std_logic;
---	  sysclk_serdes_n: in std_logic;
+	  sysclk_serdes_p: in std_logic;
+	  sysclk_serdes_n: in std_logic;
 
           serial_clock : out std_logic;
           clkref_serdes: out std_logic;
 	  
---          sysclk_serdes: out std_logic;
+          sysclk_serdes: out std_logic;
 
 	  -- PLASMA CPU PINS
 	  clk_in      : in std_logic
@@ -135,23 +135,23 @@ begin
       --         Spartan-3/3E/3A
       -- Xilinx HDL Language Template, version 11.1
 
---      IBUFDS_inst : IBUFDS
---      generic map (
---		     CAPACITANCE => "DONT_CARE", -- "LOW", "NORMAL", "DONT_CARE" (Virtex-4 only)
---		     DIFF_TERM => FALSE, -- Differential Termination (Virtex-4/5, Spartan-3E/3A)
---		     IBUF_DELAY_VALUE => "0", -- Specify the amount of added input delay for buffer, 
---					      -- "0"-"12" (Spartan-3E)
---					      -- "0"-"16" (Spartan-3A)
---		     IFD_DELAY_VALUE => "AUTO", -- Specify the amount of added delay for input register, 
---						-- "AUTO", "0"-"6" (Spartan-3E)
---						-- "AUTO", "0"-"8" (Spartan-3A)
---		     IOSTANDARD => "DEFAULT")
---      port map (
---		  O => sysclk_serdes,  -- Clock buffer output
---		  I => sysclk_serdes_p,  -- Diff_p clock buffer input (connect directly to top-level port)
---		  IB => sysclk_serdes_n -- Diff_n clock buffer input (connect directly to top-level port)
---	       );
---
+      IBUFDS_inst : IBUFDS
+      generic map (
+		     CAPACITANCE => "DONT_CARE", -- "LOW", "NORMAL", "DONT_CARE" (Virtex-4 only)
+		     DIFF_TERM => FALSE, -- Differential Termination (Virtex-4/5, Spartan-3E/3A)
+		     IBUF_DELAY_VALUE => "0", -- Specify the amount of added input delay for buffer, 
+					      -- "0"-"12" (Spartan-3E)
+					      -- "0"-"16" (Spartan-3A)
+		     IFD_DELAY_VALUE => "AUTO", -- Specify the amount of added delay for input register, 
+						-- "AUTO", "0"-"6" (Spartan-3E)
+						-- "AUTO", "0"-"8" (Spartan-3A)
+		     IOSTANDARD => "DEFAULT")
+      port map (
+		  O => sysclk_serdes,  -- Clock buffer output
+		  I => sysclk_serdes_p,  -- Diff_p clock buffer input (connect directly to top-level port)
+		  IB => sysclk_serdes_n -- Diff_n clock buffer input (connect directly to top-level port)
+	       );
+
    end generate;
 
 end Behavioral;
